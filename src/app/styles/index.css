@@ -1,0 +1,346 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-app: #1a1040;
+  --bg-card: #ffffff;
+  --bg-sidebar: #12112a;
+  --bg-input: #f3f4f6;
+  --c-purple: #7c3aed;
+  --c-purple-mid: #a855f7;
+  --c-purple-pale: rgba(124, 58, 237, 0.15);
+  --c-gold: #f59e0b;
+  --c-gold-light: #fde68a;
+  --c-green: #22c55e;
+  --c-red: #ef4444;
+  --text-primary: #1a1040;
+  --text-white: #ffffff;
+  --text-muted: #6b7280;
+  --text-purple: #7c3aed;
+  --border: rgba(124, 58, 237, 0.2);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --shadow-purple: 0 4px 20px rgba(124, 58, 237, 0.35);
+  --shadow-gold: 0 4px 20px rgba(245, 158, 11, 0.45);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html.light {
+  --bg-app: #efeafd;
+  --bg-sidebar: #1b1742;
+  --border: rgba(124, 58, 237, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: Nunito, ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.card-dark {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  border: 0;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-ghost:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-ghost:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1040;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 12px 24px;
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 12px 24px;
+  box-shadow: var(--shadow-purple);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 10px 20px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #f59e0b, #f97316, #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.input-field {
+  width: 100%;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: var(--bg-input);
+  padding: 12px 16px;
+  color: #1a1040;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-field:focus {
+  border-color: var(--c-purple);
+}
+
+.glow-purple {
+  box-shadow: 0 0 16px rgba(124, 58, 237, 0.5);
+}
+
+.glow-gold {
+  box-shadow:
+    0 0 20px rgba(245, 158, 11, 0.6),
+    0 0 40px rgba(245, 158, 11, 0.2);
+}
+
+.scrollbar-soft {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.5) rgba(255, 255, 255, 0.06);
+}
+
+.scrollbar-soft::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-soft::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+  border-radius: 999px;
+}
+
+.star-shine {
+  color: #f59e0b;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.9), 0 0 16px rgba(245, 158, 11, 0.5);
+  animation: starPulse 2s ease-in-out infinite;
+}
+
+.star-label-glow {
+  color: #f59e0b;
+  font-size: 10px;
+  font-weight: 900;
+  margin-top: 2px;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
+}
+
+.star-glow {
+  animation: starCardGlow 3s ease-in-out infinite;
+}
+
+@keyframes starPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes starCardGlow {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.7), 0 0 36px rgba(245, 158, 11, 0.3);
+  }
+}
+
+.legendary-pulse {
+  animation: legendaryPulse 2s ease-in-out infinite;
+}
+
+.float-soft {
+  animation: floatSoft 3.5s ease-in-out infinite;
+}
+
+.shake {
+  animation: shake 0.35s ease;
+}
+
+.points-float {
+  animation: pointsFloat 1.5s ease-out forwards;
+}
+
+.pack-card-3d {
+  transform-style: preserve-3d;
+  perspective: 900px;
+}
+
+.pack-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.55s ease;
+}
+
+.pack-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.pack-card-face,
+.pack-card-back {
+  backface-visibility: hidden;
+}
+
+.pack-card-face {
+  transform: rotateY(180deg);
+}
+
+@keyframes legendaryPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(245, 158, 11, 0.55),
+      0 0 36px rgba(245, 158, 11, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(245, 158, 11, 0.9),
+      0 0 60px rgba(245, 158, 11, 0.36);
+  }
+}
+
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes pointsFloat {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-42px) scale(1.05);
+  }
+}
+
+@keyframes confettiFly {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), var(--ty)) rotate(var(--tr));
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes packBurst {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.1) rotate(18deg);
+  }
+}
+
+@media (max-width: 1120px) {
+  .desktop-shell {
+    flex-direction: column;
+  }
+
+  .desktop-shell aside {
+    position: static;
+    width: 100%;
+  }
+}
