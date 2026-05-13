@@ -1,27 +1,37 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { TASK_TEMPLATES } from '@/shared/data/taskTemplates';
-import { STARTER_CARDS, UPGRADE_COSTS } from '@/shared/data/cardData';
+import { STARTER_CARDS, UPGRADE_COSTS, CARD_LIBRARY } from '@/shared/data/cardData';
 import { todayKey, lastDays } from '@/shared/lib/date';
 import { isSupabaseConfigured, supabase } from '@/shared/lib/supabase';
 import { generateInviteCode } from '@/features/invite/model/inviteActions';
+import { getActiveSynergies } from '@/shared/data/synergies';
 
 const STORAGE_KEY = 'card-quest-state-v1';
 const CURRENT_MEMBER_KEY = 'card-quest-current-member-id';
 
+const TOAST_DURATION = {
+  damage: 2000,
+  crit: 3000,
+  boss_attack: 3000,
+  boss_phase: 4000,
+  victory: 4000,
+};
+
 const defaultBoss = {
-  name: 'Дракон Прокрастинации',
-  emoji: '🐉',
-  subtitle: 'Хранитель отложенных дел',
-  maxHp: 1200,
-  hp: 860,
-  weakness: 'study',
+  name: 'Дракон Лени',
+  emoji: '🐲',
+  subtitle: 'Повелитель прокрастинации',
+  maxHp: 1000,
+  hp: 1000,
+  weakness: 'activity',
   daysLeft: 3,
+  phase: 1,
   logs: [
-    { id: 'log-1', text: '⚔️ Гильдия готовится к битве!', at: Date.now() - 3600000 },
-    { id: 'log-2', text: '🐉 Босс ворчит над списком дел.', at: Date.now() - 7200000 },
+    { id: 'log-init', text: 'Дракон Лени появился над городом! Гильдия, к бою!', at: Date.now(), type: 'phase' },
   ],
   damageByMember: {},
+  damageByMemberToday: {},
 };
 
 const baseState = {
@@ -39,6 +49,8 @@ const baseState = {
   isLoading: false,
   toasts: [],
   boss: defaultBoss,
+  bossDeck: [],
+  guildPoints: 100,
   theme: 'dark',
 };
 
@@ -148,32 +160,43 @@ const normalizeMemberCollections = (collections, members) => {
   return result;
 };
 
-const normalizeBoss = (bossWeek, damageRows = []) => {
-  if (!bossWeek) return defaultBoss;
-  const boss = bossWeek.bosses ?? bossWeek.boss ?? {};
-  const damageByMember = safeArray(damageRows).reduce((acc, row) => {
-    acc[row.member_id] = (acc[row.member_id] ?? 0) + (row.damage ?? 0);
-    return acc;
-  }, {});
+const normalizeBoss = (bossWeek, damageRows = [], guildPoints = 100, todayKeyStr = todayKey()) => {
+   if (!bossWeek) return defaultBoss;
 
-  const weekEnd = bossWeek.week_end ? new Date(bossWeek.week_end) : null;
-  const daysLeft = weekEnd ? Math.max(0, Math.ceil((weekEnd - new Date()) / 86400000)) : defaultBoss.daysLeft;
+   const damageByMember = safeArray(damageRows).reduce((acc, row) => {
+     acc[row.member_id] = (acc[row.member_id] ?? 0) + (row.damage ?? 0);
+     return acc;
+   }, {});
 
-  return {
-    name: boss.name ?? defaultBoss.name,
-    emoji: boss.emoji ?? defaultBoss.emoji,
-    subtitle: boss.subtitle ?? defaultBoss.subtitle,
-    maxHp: bossWeek.boss_hp_max ?? boss.hp ?? defaultBoss.maxHp,
-    hp: bossWeek.boss_hp_cur ?? bossWeek.hp ?? defaultBoss.hp,
-    weakness: boss.weakness ?? defaultBoss.weakness,
-    daysLeft,
-    damageByMember,
-    logs: [
-      { id: `boss-${bossWeek.id}`, text: `⚔️ Битва с "${boss.name ?? defaultBoss.name}" активна`, at: Date.now() },
-      ...defaultBoss.logs.slice(0, 4),
-    ],
-  };
-};
+   const damageByMemberToday = safeArray(damageRows)
+     .filter((row) => row.date === todayKeyStr)
+     .reduce((acc, row) => {
+       acc[row.member_id] = (acc[row.member_id] ?? 0) + (row.damage_today ?? row.damage ?? 0);
+       return acc;
+     }, {});
+
+   const weekEnd = bossWeek.week_end ? new Date(bossWeek.week_end) : null;
+   const daysLeft = weekEnd ? Math.max(0, Math.ceil((weekEnd - new Date()) / 86400000)) : defaultBoss.daysLeft;
+   const hp = bossWeek.boss_hp_cur ?? defaultBoss.hp;
+   const maxHp = bossWeek.boss_hp_max ?? defaultBoss.maxHp;
+   const phase = hp <= maxHp / 2 ? 2 : 1;
+
+   return {
+     name: bossWeek.boss_name ?? defaultBoss.name,
+     emoji: bossWeek.boss_emoji ?? defaultBoss.emoji,
+     subtitle: bossWeek.boss_subtitle ?? defaultBoss.subtitle,
+     maxHp,
+     hp,
+     weakness: bossWeek.boss_weakness ?? defaultBoss.weakness,
+     daysLeft,
+     phase,
+     damageByMember,
+     damageByMemberToday,
+     logs: [
+       { id: `boss-${bossWeek.id}`, text: `⚔️ Битва с "${bossWeek.boss_name ?? defaultBoss.name}" активна`, at: Date.now(), type: 'info' },
+     ],
+   };
+ };
 
 const normalizeState = (state) => {
   const members = safeArray(state.members).map(normalizeMember);
@@ -201,6 +224,8 @@ const normalizeState = (state) => {
     memberCollections: normalizedCollections,
     exchanges: safeArray(state.exchanges).map(normalizeExchange),
     boss: { ...defaultBoss, ...(state.boss || {}) },
+    bossDeck: state.bossDeck || [],
+    guildPoints: state.guildPoints ?? 100,
     toasts: [],
     isLoading: false,
     isSetupDone: Boolean(state.family),
@@ -238,11 +263,103 @@ const makeTasks = (familyId = null, createdBy = null) =>
 
 const xpToLevel = (xp = 0) => Math.max(1, Math.floor(xp / 120) + 1);
 
+const DIFFICULTY_DAMAGE = {
+  easy: 10,
+  medium: 20,
+  hard: 40,
+};
+
+const getBossDeckForMember = (state, memberId) => {
+  const deck = state.bossDeck[memberId] || [];
+  return deck
+    .map((cardId) => {
+      const coll = state.memberCollections[memberId] || [];
+      const item = coll.find((c) => c.cardId === cardId);
+      if (!item) return null;
+      const card = CARD_LIBRARY.find((c) => c.id === cardId);
+      if (!card) return null;
+      return { ...item, card };
+    })
+    .filter(Boolean);
+};
+
+const calculateBossDamage = (task, member, state, memberId) => {
+  const baseDamage = DIFFICULTY_DAMAGE[task.difficulty] || 10;
+  let damage = baseDamage;
+
+  if (task.category === state.boss.weakness) {
+    damage *= 2;
+  }
+
+  const deckCards = getBossDeckForMember(state, memberId);
+  const matchingCard = deckCards.find((c) => c.card.category === task.category);
+  if (matchingCard) {
+    const cardAttack = Math.round(matchingCard.card.attack * (matchingCard.stars ? [1, 1.1, 1.25, 1.5][matchingCard.stars] : 1));
+    damage += Math.round(cardAttack * 0.3);
+  }
+
+  const activeSynergies = getActiveSynergies(deckCards.map((c) => c.card));
+  if (activeSynergies.length > 0) {
+    damage = Math.round(damage * 1.3);
+  }
+
+  const streak = getStreakCalc(state);
+  if (streak >= 3) {
+    const streakBonus = Math.min(0.35, 0.05 + (streak - 3) * 0.02);
+    damage = Math.round(damage * (1 + streakBonus));
+  }
+
+  const allActiveToday = state.members.every((m) => {
+    const todayDamage = state.boss.damageByMemberToday?.[m.id] || 0;
+    return todayDamage > 0 || state.completions.some(
+      (c) => (c.memberId ?? c.member_id) === m.id && (c.date === todayKey()),
+    );
+  });
+  if (allActiveToday && state.members.length > 1) {
+    damage = Math.round(damage * 1.2);
+  }
+
+  const isCrit = Math.random() < 0.05;
+  if (isCrit) {
+    damage = Math.round(damage * 2.5);
+  }
+
+  return { damage, isCrit };
+};
+
+const getStreakCalc = (state) => {
+  const days = lastDays(21).reverse();
+  let streak = 0;
+  for (const date of days) {
+    const tasks = state.tasks;
+    const members = state.members;
+    if (!members.length) break;
+    const progress = members.every((member) => {
+      const memberTasks = tasks.filter((task) => {
+        if (task.assigned_to === 'all') return true;
+        if (task.assigned_to === 'children') return member.role === 'child';
+        if (task.assigned_to === 'parents') return member.role === 'parent';
+        return task.assigned_to === member.id;
+      });
+      const completed = memberTasks.filter((task) =>
+        state.completions.some(
+          (c) => (c.taskId ?? c.task_id) === task.id && (c.memberId ?? c.member_id) === member.id && c.date === date,
+        ),
+      ).length;
+      return memberTasks.length > 0 && completed / memberTasks.length >= 0.5;
+    });
+    if (progress) streak += 1;
+    else break;
+  }
+  return streak;
+};
+
 const getRewardForTask = (task, member) => {
+  const base = DIFFICULTY_DAMAGE[task.difficulty] || 10;
   return {
-    xp: 10,
-    coins: 10,
-    damage: 10 + Math.max(0, Math.floor((member?.level || 1) * 2)),
+    xp: Math.round(base / 2),
+    coins: Math.round(base / 2),
+    damage: base,
   };
 };
 
@@ -406,24 +523,47 @@ export const useStore = create((set, get) => ({
 
       const { data: bossWeek } = await supabase
         .from('boss_weeks')
-        .select('*, bosses(*)')
+        .select('*')
         .eq('family_id', family.id)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      const guildPoints = bossWeek?.guild_points ?? 100;
+
       const { data: bossDamage } = bossWeek
         ? await supabase.from('boss_damage').select('*').eq('boss_week_id', bossWeek.id)
         : { data: [] };
+
+      const memberCollectionsMap = normalizeMemberCollections(memberCollectionsData || [], membersData);
+      const selectedMember = membersData.find(m => m.user_id === userId) || membersData[0];
+
+      const { data: battleDeckRows } = selectedMember
+        ? await supabase
+            .from('battle_deck')
+            .select('slot, card_id')
+            .eq('family_id', family.id)
+            .order('slot', { ascending: true })
+        : { data: [] };
+
+      const bossDeckMap = {};
+      safeArray(battleDeckRows).forEach((row) => {
+        if (row.slot >= 1 && row.slot <= 4 && row.card_id) {
+          bossDeckMap[row.slot - 1] = row.card_id;
+        }
+      });
+      const indexed = Object.values(bossDeckMap);
+      const keyed = { [selectedMember.id]: indexed };
+      const finalBossDeck = { ...get().bossDeck, ...keyed };
+
+      const bossWeekId = bossWeek?.id || null;
 
       const { data: exchangesData } = await supabase
           .from('card_exchanges')
           .select('*')
           .eq('family_id', family.id)
           .order('created_at', { ascending: false });
-
-      const memberCollectionsMap = normalizeMemberCollections(memberCollectionsData || [], membersData);
-      const selectedMember = membersData.find(m => m.user_id === userId) || membersData[0];
 
       const normalized = normalizeState({
         authUserId: userId,
@@ -436,6 +576,8 @@ export const useStore = create((set, get) => ({
         currentCollectionMember: selectedMember?.id,
         exchanges: exchangesData,
         boss: normalizeBoss(bossWeek, bossDamage),
+        guildPoints,
+        bossDeck: finalBossDeck,
         currentMemberId: selectedMember?.id,
         theme: get().theme,
       });
@@ -510,6 +652,27 @@ export const useStore = create((set, get) => ({
       const { data: insertedTasks } = await supabase.from('tasks').insert(tasksToInsert).select('*');
       await supabase.from('pity_counters').insert({ family_id: family.id });
       await supabase.from('collection').insert(STARTER_CARDS.map((card) => ({ family_id: family.id, card_id: card.id, count: 1 })));
+
+      const today = new Date();
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay() + 1);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      await supabase.from('boss_weeks').insert({
+        family_id: family.id,
+        boss_name: 'Дракон Ли',
+        boss_emoji: '🐲',
+        boss_subtitle: 'Повелитель прокрастинации',
+        boss_weakness: 'activity',
+        week_start: weekStart.toISOString().split('T')[0],
+        week_end: weekEnd.toISOString().split('T')[0],
+        boss_hp_max: 1000,
+        boss_hp_cur: 1000,
+        is_active: true,
+        is_won: false,
+        guild_points: 100,
+      });
 
       const inviteCode = await generateInviteCode(family.id, ownerMember.id);
 
@@ -729,6 +892,7 @@ export const useStore = create((set, get) => ({
     }
 
     const reward = getRewardForTask(task, member);
+    const { damage, isCrit } = calculateBossDamage(task, member, state, memberId);
     const wasAlreadyAwarded = awardedOnDate(state.rewardsAwarded, taskId, memberId, date);
     const completion = normalizeCompletion({ id: uuidv4(), taskId, memberId, date, completed_at: new Date().toISOString() });
     const award = normalizeReward({ id: uuidv4(), taskId, memberId, date, xp_given: reward.xp, coins_given: reward.coins });
@@ -736,6 +900,8 @@ export const useStore = create((set, get) => ({
     let newMember = member;
     let newFamily = state.family;
     let newBoss = state.boss;
+    let phaseTriggered = false;
+    let phaseChanged = false;
 
     commit(set, get, (current) => {
       const members = wasAlreadyAwarded
@@ -757,21 +923,47 @@ export const useStore = create((set, get) => ({
           });
       newFamily = family;
 
-      const boss = wasAlreadyAwarded
-        ? current.boss
-        : {
-            ...current.boss,
-            hp: Math.max(0, current.boss.hp - reward.damage),
-            damageByMember: {
-              ...current.boss.damageByMember,
-              [memberId]: (current.boss.damageByMember?.[memberId] || 0) + reward.damage,
-            },
-            logs: [
-              { id: uuidv4(), text: `⚔️ ${member.name} нанёс ${reward.damage} урона!`, at: Date.now() },
-              ...current.boss.logs,
-            ].slice(0, 12),
-          };
-      newBoss = boss;
+      if (wasAlreadyAwarded) {
+        newBoss = current.boss;
+      } else {
+        const prevHp = current.boss.hp;
+        const nextHp = Math.max(0, prevHp - damage);
+        const nextPhase = nextHp <= current.boss.maxHp / 2 ? 2 : 1;
+        phaseTriggered = nextPhase === 2 && current.boss.phase !== 2;
+        phaseChanged = nextPhase !== current.boss.phase;
+
+        const logType = isCrit ? 'crit' : 'damage';
+        const logText = isCrit
+          ? `💥 ${member.name} нанёс КРИТ! → ${damage} урона!`
+          : `⚔️ ${member.name} выполнил «${task.title}» → ${damage} урона`;
+
+        const newLogs = [
+          { id: uuidv4(), text: logText, at: Date.now(), type: logType },
+          ...current.boss.logs,
+        ].slice(0, 20);
+
+        const newLogsWithPhase = phaseTriggered
+          ? [
+              { id: uuidv4(), text: '⚠️ Дракон Лени входит в ярость! Теперь атакует дважды!', at: Date.now(), type: 'phase' },
+              ...newLogs,
+            ]
+          : newLogs;
+
+        newBoss = {
+          ...current.boss,
+          hp: nextHp,
+          phase: nextPhase,
+          damageByMember: {
+            ...current.boss.damageByMember,
+            [memberId]: (current.boss.damageByMember?.[memberId] || 0) + damage,
+          },
+          damageByMemberToday: {
+            ...current.boss.damageByMemberToday,
+            [memberId]: (current.boss.damageByMemberToday?.[memberId] || 0) + damage,
+          },
+          logs: newLogsWithPhase,
+        };
+      }
 
       return {
         ...current,
@@ -779,7 +971,7 @@ export const useStore = create((set, get) => ({
         rewardsAwarded: wasAlreadyAwarded ? current.rewardsAwarded : [...current.rewardsAwarded, award],
         members,
         family,
-        boss,
+        boss: newBoss,
       };
     });
 
@@ -799,22 +991,76 @@ export const useStore = create((set, get) => ({
             date,
             xp_given: reward.xp,
             coins_given: reward.coins,
-          });
-          if (rewardError && rewardError.code !== '23505') throw rewardError;
+           });
+           if (rewardError && rewardError.code !== '23505') throw rewardError;
 
-          await supabase
-            .from('members')
-            .update({
-              xp: newMember.xp,
-              level: newMember.level,
-              total_tasks: newMember.total_tasks,
-            })
-            .eq('id', memberId);
-          await supabase.from('families').update(familyPatchToDb({
-            coins: newFamily.coins,
-            guild_xp: newFamily.guild_xp,
-            guild_level: newFamily.guild_level,
-          })).eq('id', newFamily.id);
+           await supabase
+             .from('members')
+             .update({
+               xp: newMember.xp,
+               level: newMember.level,
+               total_tasks: newMember.total_tasks,
+             })
+             .eq('id', memberId);
+           await supabase.from('families').update(familyPatchToDb({
+             coins: newFamily.coins,
+             guild_xp: newFamily.guild_xp,
+             guild_level: newFamily.guild_level,
+           })).eq('id', newFamily.id);
+
+           let activeBossWeek = await supabase
+             .from('boss_weeks')
+             .select('id, boss_hp_cur')
+             .eq('family_id', newFamily.id)
+             .eq('is_active', true)
+             .maybeSingle();
+
+           if (!activeBossWeek) {
+             const today = new Date();
+             const weekStart = new Date(today);
+             weekStart.setDate(today.getDate() - today.getDay() + 1);
+             const weekEnd = new Date(weekStart);
+             weekEnd.setDate(weekStart.getDate() + 6);
+
+             const { data: createdBw } = await supabase.from('boss_weeks').insert({
+               family_id: newFamily.id,
+               boss_name: 'Дракон Ли',
+               boss_emoji: '🐲',
+               boss_subtitle: 'Повелитель прокрастинации',
+               boss_weakness: 'activity',
+               week_start: weekStart.toISOString().split('T')[0],
+               week_end: weekEnd.toISOString().split('T')[0],
+               boss_hp_max: 1000,
+               boss_hp_cur: 1000,
+               is_active: true,
+               is_won: false,
+               guild_points: newFamily?.guild_points ?? 100,
+             }).select('id, boss_hp_cur').maybeSingle();
+
+             if (createdBw) {
+               activeBossWeek = createdBw;
+             }
+           }
+
+           if (activeBossWeek) {
+             const newHp = Math.max(0, newBoss.hp);
+
+             await supabase
+               .from('boss_weeks')
+               .update({ boss_hp_cur: newHp })
+               .eq('id', activeBossWeek.id);
+
+             const { error: bossDamageError } = await supabase
+               .from('boss_damage')
+               .insert({
+                 boss_week_id: activeBossWeek.id,
+                 member_id: memberId,
+                 date,
+                 damage,
+                 damage_today: damage,
+               });
+             if (bossDamageError && bossDamageError.code !== '23505') throw bossDamageError;
+           }
         }
       } catch (error) {
         console.error('completeTask sync error:', error);
@@ -822,7 +1068,29 @@ export const useStore = create((set, get) => ({
       }
     }
 
-    return { wasNewReward: !wasAlreadyAwarded, reward, boss: newBoss };
+    if (!wasAlreadyAwarded && (phaseChanged || newBoss.hp === 0)) {
+      setTimeout(() => {
+        if (phaseTriggered) {
+          get().addToast('⚠️ Дракон Лени разъярён! Он становится опаснее!', 'boss_phase');
+        }
+        if (newBoss.hp === 0) {
+          get().triggerVictory();
+        }
+      }, 500);
+    }
+
+    if (!wasAlreadyAwarded) {
+      const toastMsg = isCrit
+        ? `💥 КРИТ! ${damage} урона!`
+        : `⚔️ ${damage} урона по боссу!`;
+      const toastType = isCrit ? 'crit' : 'damage';
+      get().setLastDamageEvent({ damage, isCrit });
+      if (damage > 0) {
+        get().addToast(toastMsg, toastType);
+      }
+    }
+
+    return { wasNewReward: !wasAlreadyAwarded, reward, damage, isCrit, boss: newBoss };
   },
 
   uncompleteTask: async (taskId, memberId) => {
@@ -1029,7 +1297,8 @@ export const useStore = create((set, get) => ({
   addToast: (message, type = 'info', data = null) => {
     const id = uuidv4();
     set((state) => ({ ...state, toasts: [...state.toasts, { id, message, type, data }] }));
-    const duration = type === 'exchange' ? 15000 : 3000;
+    const customDuration = TOAST_DURATION[type];
+    const duration = customDuration ?? (type === 'exchange' ? 15000 : 3000);
     window.setTimeout(() => {
       set((state) => ({ ...state, toasts: state.toasts.filter((toast) => toast.id !== id) }));
     }, duration);
@@ -1475,5 +1744,168 @@ export const useStore = create((set, get) => ({
   getMySentExchanges: () => {
     const { exchanges, currentMemberId } = get();
     return exchanges.filter((e) => e.initiatorId === currentMemberId);
+  },
+
+  setBossDeck: (cardIds) => {
+    const { currentMemberId, family } = get();
+    if (!currentMemberId) return;
+    commit(set, get, (state) => ({
+      ...state,
+      bossDeck: { ...state.bossDeck, [currentMemberId]: cardIds.slice(0, 4) },
+    }));
+
+    if (isSupabaseConfigured && family?.id) {
+      runRemote(
+        supabase
+          .from('battle_deck')
+          .delete()
+          .eq('family_id', family.id)
+          .in('slot', [1, 2, 3, 4])
+          .then(() => {
+            const rows = cardIds.slice(0, 4).map((cardId, idx) => ({
+              family_id: family.id,
+              card_id: cardId,
+              slot: idx + 1,
+            })).filter((r) => r.card_id);
+            if (rows.length > 0) {
+              return supabase.from('battle_deck').insert(rows);
+            }
+            return null;
+          })
+          .then(({ error }) => (error ? Promise.reject(error) : null)),
+        get,
+        'setBossDeck',
+      );
+    }
+  },
+
+  getBossDeck: () => {
+    const { currentMemberId, bossDeck, memberCollections } = get();
+    if (!currentMemberId) return [];
+    const cardIds = bossDeck[currentMemberId] || [];
+    return cardIds
+      .map((cardId) => {
+        const coll = memberCollections[currentMemberId] || [];
+        const item = coll.find((c) => c.cardId === cardId);
+        if (!item) return null;
+        const card = CARD_LIBRARY.find((c) => c.id === cardId);
+        if (!card) return null;
+        return { ...item, card };
+      })
+      .filter(Boolean);
+  },
+
+  addBossLog: (text, type = 'info') => {
+    commit(set, get, (state) => ({
+      ...state,
+      boss: {
+        ...state.boss,
+        logs: [{ id: uuidv4(), text, at: Date.now(), type }, ...state.boss.logs].slice(0, 20),
+      },
+    }));
+  },
+
+  triggerBossAttack: (penalty) => {
+    const { guildPoints, boss, family } = get();
+    const newPoints = Math.max(0, guildPoints - penalty);
+    const newHp = boss.phase === 2 ? Math.min(boss.maxHp, boss.hp + 50) : boss.hp;
+    commit(set, get, (state) => ({
+      ...state,
+      guildPoints: newPoints,
+      boss: { ...state.boss, hp: newHp },
+    }));
+    const logText = `🐲 Гильдия была неактивна! Дракон атакует → -${penalty} очков`;
+    get().addBossLog(logText, 'attack');
+    get().addToast(`🐲 Дракон атакует гильдию! -${penalty} очков`, 'boss_attack');
+
+    if (isSupabaseConfigured && family?.id) {
+      supabase
+        .from('boss_weeks')
+        .select('id')
+        .eq('family_id', family.id)
+        .eq('is_active', true)
+        .maybeSingle()
+        .then(({ data: bw }) => {
+          if (!bw) return;
+          const updates = { guild_points: newPoints };
+          if (boss.phase === 2) updates.boss_hp_cur = newHp;
+          supabase.from('boss_weeks').update(updates).eq('id', bw.id).then(({ error }) => {
+            if (error) console.error('triggerBossAttack sync:', error);
+          });
+        });
+    }
+  },
+
+  triggerVictory: () => {
+    const { family, boss } = get();
+    const reward = 250;
+    const coins = (family?.coins ?? 0) + reward;
+    commit(set, get, (state) => ({
+      ...state,
+      family: normalizeFamily({ ...state.family, coins }),
+      boss: {
+        ...state.boss,
+        logs: [{ id: uuidv4(), text: `🏆 Дракон побеждён! +${reward} монет!`, at: Date.now(), type: 'victory' }, ...state.boss.logs].slice(0, 20),
+      },
+    }));
+    get().addToast(`🏆 Дракон побеждён! +${reward} монет!`, 'victory');
+    if (isSupabaseConfigured && family?.id) {
+      supabase.from('families').update({ coins }).eq('id', family.id).then(({ error }) => {
+        if (error) console.error('victory sync:', error);
+      });
+      supabase
+        .from('boss_weeks')
+        .select('id')
+        .eq('family_id', family.id)
+        .eq('is_active', true)
+        .maybeSingle()
+        .then(({ data: bw }) => {
+          if (!bw) return;
+          supabase.from('boss_weeks').update({ is_won: true }).eq('id', bw.id);
+        });
+    }
+    setTimeout(() => {
+      get().resetBossWeek();
+    }, 5000);
+  },
+
+  resetBossWeek: () => {
+    const { boss } = get();
+    commit(set, get, (state) => ({
+      ...state,
+      boss: {
+        ...defaultBoss,
+        maxHp: Math.round(boss.maxHp * 0.9),
+        hp: Math.round(boss.maxHp * 0.9),
+        logs: [{ id: uuidv4(), text: 'Дракон Лени появился над городом! Гильдия, к бою!', at: Date.now(), type: 'phase' }],
+      },
+    }));
+  },
+
+  checkBossAttackNeeded: () => {
+    const { members, tasks, completions } = get();
+    if (!members.length || !tasks.length) return;
+
+    const yesterday = lastDays(1)[0];
+    const totalTasks = tasks.length;
+    const completedYesterday = completions.filter((c) => c.date === yesterday).length;
+    const completionRate = totalTasks > 0 ? completedYesterday / totalTasks : 0;
+
+    if (completionRate < 0.3 && completionRate >= 0.1) {
+      get().triggerBossAttack(15);
+    } else if (completionRate < 0.1) {
+      get().triggerBossAttack(25);
+    } else if (completionRate < 0.5) {
+      get().triggerBossAttack(5);
+    }
+  },
+
+  lastDamageEvent: null,
+
+  setLastDamageEvent: (event) => {
+    commit(set, get, (state) => ({ ...state, lastDamageEvent: event }));
+    setTimeout(() => {
+      commit(set, get, (state) => ({ ...state, lastDamageEvent: null }));
+    }, 2000);
   },
 }));

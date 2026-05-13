@@ -124,29 +124,20 @@ create table if not exists pity_counters (
   unique(family_id)
 );
 
-create table if not exists bosses (
-  id text primary key,
-  name text not null,
-  emoji text not null,
-  subtitle text,
-  hp int not null,
-  weakness text not null,
-  story text,
-  reward_coins int default 200,
-  reward_card text references cards(id),
-  created_at timestamptz default now()
-);
-
 create table if not exists boss_weeks (
   id uuid primary key default gen_random_uuid(),
   family_id uuid references families(id) on delete cascade,
-  boss_id text references bosses(id),
+  boss_name text not null,
+  boss_emoji text not null,
+  boss_subtitle text,
+  boss_weakness text not null,
   week_start date not null,
   week_end date not null,
   boss_hp_max int not null,
   boss_hp_cur int not null,
   is_won boolean default false,
   is_active boolean default true,
+  guild_points int default 100,
   created_at timestamptz default now(),
   unique(family_id, week_start)
 );
@@ -421,7 +412,7 @@ alter table cards enable row level security;
 alter table collection enable row level security;
 alter table packs_history enable row level security;
 alter table pity_counters enable row level security;
-alter table bosses enable row level security;
+
 alter table boss_weeks enable row level security;
 alter table boss_damage enable row level security;
 alter table battle_deck enable row level security;
@@ -435,8 +426,8 @@ alter table invitations enable row level security;
 drop policy if exists "cards_public_read" on cards;
 create policy "cards_public_read" on cards for select using (true);
 
-drop policy if exists "bosses_public_read" on bosses;
-create policy "bosses_public_read" on bosses for select using (true);
+
+
 
 drop policy if exists "profile_own" on user_profiles;
 create policy "profile_own" on user_profiles for all
@@ -702,19 +693,5 @@ on conflict (id) do update set
   ability = excluded.ability,
   flavor_text = excluded.flavor_text;
 
-insert into bosses (id, name, emoji, subtitle, hp, weakness, story, reward_coins, reward_card) values
-('boss_001','Дракон Лени','🐲','Повелитель прокрастинации',1000,'activity','Похищает энергию у тех, кто откладывает дела.',200,'c020'),
-('boss_002','Великан Хаоса','👹','Разрушитель порядка',1200,'home','Разбрасывает всё по углам. Порядок остановит его.',250,'c022'),
-('boss_003','Ведьма Забывчивости','🧙‍♀️','Похитительница знаний',800,'study','Крадёт воспоминания. Знания — лучшее оружие.',180,'c026'),
-('boss_004','Вирус Хворости','🦠','Враг здоровья',900,'health','Атакует тех, кто забывает о себе.',220,'c016'),
-('boss_005','Призрак Одиночества','👻','Разрушитель связей',750,'care','Питается холодом между людьми.',160,'c014')
-on conflict (id) do update set
-  name = excluded.name,
-  emoji = excluded.emoji,
-  subtitle = excluded.subtitle,
-  hp = excluded.hp,
-  weakness = excluded.weakness,
-  story = excluded.story,
-  reward_coins = excluded.reward_coins,
-  reward_card = excluded.reward_card;
+
 ```
