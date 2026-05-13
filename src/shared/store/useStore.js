@@ -1008,7 +1008,7 @@ export const useStore = create((set, get) => ({
              guild_level: newFamily.guild_level,
            })).eq('id', newFamily.id);
 
-           let activeBossWeek = await supabase
+           let { data: activeBossWeek } = await supabase
              .from('boss_weeks')
              .select('id, boss_hp_cur')
              .eq('family_id', newFamily.id)
