@@ -1048,18 +1048,18 @@ export const useStore = create((set, get) => ({
              await supabase
                .from('boss_weeks')
                .update({ boss_hp_cur: newHp })
-               .eq('id', activeBossWeek.id);
+              .eq('id', activeBossWeek.id);
 
-             const { error: bossDamageError } = await supabase
-               .from('boss_damage')
-               .insert({
-                 boss_week_id: activeBossWeek.id,
-                 member_id: memberId,
-                 date,
-                 damage,
-                 damage_today: damage,
-               });
-             if (bossDamageError && bossDamageError.code !== '23505') throw bossDamageError;
+              const { error: bossDamageError } = await supabase
+                .from('boss_damage')
+                .insert({
+                  boss_week_id: activeBossWeek.id,
+                  member_id: memberId,
+                  date,
+                  damage,
+                  damage_today: damage,
+                });
+              if (bossDamageError && bossDamageError.code !== '23505') throw bossDamageError;
            }
         }
       } catch (error) {

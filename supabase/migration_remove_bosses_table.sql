@@ -38,7 +38,10 @@ alter table boss_weeks alter column boss_weakness set not null;
 alter table boss_weeks drop constraint if exists boss_weeks_boss_id_fkey;
 alter table boss_weeks drop column if exists boss_id;
 
--- 6. Drop bosses RLS policies
+-- Drop boss_damage unique constraint (prevents multiple damage entries per member per day)
+alter table boss_damage drop constraint if exists boss_damage_member_date_key;
+
+-- 7. Drop bosses RLS policies
 drop policy if exists "bosses_public_read" on bosses;
 
 -- 7. Drop the bosses table
