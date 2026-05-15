@@ -59,15 +59,16 @@ export const StatsPage = () => {
 
       <section className="card p-6">
         <h2 className="mb-5 text-lg font-black text-[var(--text-primary)]">Активность за 7 дней</h2>
-        <div className="flex h-[140px] items-end justify-between gap-3">
+        <div className="flex h-[160px] items-end justify-between gap-3">
           {days.map((date, index) => {
             const progress = getFamilyProgress(date);
             const isToday = index === days.length - 1;
+            const barHeight = Math.max(4, (progress.percent / 100) * 120);
             const color = isToday ? '#7c3aed' : progress.percent >= 70 ? '#22c55e' : progress.percent >= 35 ? '#f59e0b' : '#ef4444';
             return (
               <div key={date} className="group flex flex-1 flex-col items-center justify-end gap-2">
-                <div className="relative w-full rounded-t-xl transition group-hover:brightness-110" style={{ height: `${Math.max(8, progress.percent)}%`, background: color }}>
-                  <div className="pointer-events-none absolute -top-9 left-1/2 hidden -translate-x-1/2 rounded-lg bg-gray-900 px-2 py-1 text-xs font-black text-white group-hover:block">
+                <div className="relative w-full rounded-t-xl transition group-hover:brightness-110" style={{ height: `${barHeight}px`, background: color }}>
+                  <div className="pointer-events-none absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded-lg bg-gray-900 px-2 py-1 text-xs font-black text-white group-hover:block">
                     {progress.percent}%
                   </div>
                 </div>

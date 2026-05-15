@@ -7,6 +7,11 @@ const toastStyles = {
   error: 'border-l-[4px] border-l-[var(--c-red)]',
   info: 'border-l-[4px] border-l-blue-500',
   exchange: 'border-l-[4px] border-l-[var(--c-purple)]',
+  damage: 'border-l-[4px] border-l-green-500',
+  crit: 'border-l-[4px] border-l-yellow-400',
+  boss_attack: 'border-l-[4px] border-l-red-500',
+  boss_phase: 'border-l-[4px] border-l-orange-500',
+  victory: 'border-l-[4px] border-l-yellow-400',
 };
 
 const toastIcon = {
@@ -15,6 +20,19 @@ const toastIcon = {
   error: '⚠️',
   info: 'ℹ️',
   exchange: '🔄',
+  damage: '⚔️',
+  crit: '💥',
+  boss_attack: '🐲',
+  boss_phase: '⚠️',
+  victory: '🏆',
+};
+
+const toastDuration = {
+  damage: 2000,
+  crit: 3000,
+  boss_attack: 3000,
+  boss_phase: 4000,
+  victory: 4000,
 };
 
 export const ToastContainer = () => {

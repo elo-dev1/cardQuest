@@ -1,12 +1,12 @@
 import { CATEGORIES } from '@/shared/data/taskTemplates';
 import { RARITIES, STAR_LEVELS } from '@/shared/data/cardData';
 
-export const CardView = ({ card, count = 0, stars = 0, isNew = false, size = 'sm', locked = false, onClick }) => {
+export const CardView = ({ card, count = 0, stars = 0, isNew = false, size = 'sm', locked = false, onClick, selected = false }) => {
   const rarity = RARITIES[card?.rarity] || RARITIES.common;
   const starLevel = STAR_LEVELS[stars] || STAR_LEVELS[0];
   const category = CATEGORIES[card?.category] || CATEGORIES.special;
   const [from, to] = (category.gradient || '#8b5cf6,#7c3aed').split(',');
-  const dimensions = size === 'lg' ? 'h-[250px] w-[180px]' : size === 'md' ? 'h-[168px] w-[120px]' : 'h-[140px] w-[100px]';
+  const dimensions = size === 'lg' ? 'h-[250px] w-[180px]' : size === 'md' ? 'h-[168px] w-[120px]' : size === 'fill' ? 'w-full h-full' : 'h-[140px] w-[100px]';
   const hasImage = Boolean(card?.image);
 
   const baseBorder = starLevel.borderWidth;
@@ -39,7 +39,7 @@ export const CardView = ({ card, count = 0, stars = 0, isNew = false, size = 'sm
     <button
       type="button"
       onClick={onClick}
-      className={`${dimensions} group relative overflow-hidden rounded-[14px] bg-white text-left transition hover:-translate-y-1 ${
+      className={`${dimensions} group relative overflow-hidden rounded-[14px] bg-white text-left transition hover:-translate-y-1 ${selected ? 'ring-2 ring-purple-600 ring-offset-1' : ''} ${
         card.rarity === 'legendary' ? 'legendary-pulse' : stars > 0 ? 'star-glow' : ''
       }`}
       style={{
@@ -50,6 +50,11 @@ export const CardView = ({ card, count = 0, stars = 0, isNew = false, size = 'sm
       {count > 1 ? (
         <span className="absolute right-1.5 top-1.5 z-10 rounded-full bg-[var(--c-purple)] px-2 py-0.5 text-[12px] font-black text-white">
           x{count}
+        </span>
+      ) : null}
+      {selected ? (
+        <span className="absolute left-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-sm font-black text-white">
+          ✓
         </span>
       ) : null}
       {isNew ? (

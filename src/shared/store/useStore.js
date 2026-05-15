@@ -107,13 +107,27 @@ const normalizeTask = (task, index = 0) => ({
   sort_order: task.sort_order ?? index,
 });
 
-const normalizeCompletion = (completion) => ({
-  ...completion,
-  taskId: completion.taskId ?? completion.task_id,
-  task_id: completion.task_id ?? completion.taskId,
-  memberId: completion.memberId ?? completion.member_id,
-  member_id: completion.member_id ?? completion.memberId,
-});
+const normalizeCompletion = (completion) => {
+  let date = completion.date;
+  if (!date && completion.completed_at) {
+    date = new Date(completion.completed_at).toISOString().split('T')[0];
+  }
+  if (date instanceof Date) {
+    date = date.toISOString().split('T')[0];
+  }
+  if (date && typeof date === 'string' && date.includes('T')) {
+    date = date.split('T')[0];
+  }
+
+  return {
+    ...completion,
+    date,
+    taskId: completion.taskId ?? completion.task_id,
+    task_id: completion.task_id ?? completion.taskId,
+    memberId: completion.memberId ?? completion.member_id,
+    member_id: completion.member_id ?? completion.memberId,
+  };
+};
 
 const normalizeReward = (reward) => ({
   ...reward,
@@ -160,7 +174,7 @@ const normalizeMemberCollections = (collections, members) => {
   return result;
 };
 
-const normalizeBoss = (bossWeek, damageRows = [], guildPoints = 100, todayKeyStr = todayKey()) => {
+const normalizeBoss = (bossWeek, damageRows = [], guildPoints = 100, todayKeyStr = todayKey(), existingLogs = null) => {
    if (!bossWeek) return defaultBoss;
 
    const damageByMember = safeArray(damageRows).reduce((acc, row) => {
@@ -181,6 +195,12 @@ const normalizeBoss = (bossWeek, damageRows = [], guildPoints = 100, todayKeyStr
    const maxHp = bossWeek.boss_hp_max ?? defaultBoss.maxHp;
    const phase = hp <= maxHp / 2 ? 2 : 1;
 
+   const logs = existingLogs && existingLogs.length > 0
+     ? existingLogs
+     : [
+         { id: `boss-${bossWeek.id}`, text: `⚔️ Битва с "${bossWeek.boss_name ?? defaultBoss.name}" активна`, at: Date.now(), type: 'info' },
+       ];
+
    return {
      name: bossWeek.boss_name ?? defaultBoss.name,
      emoji: bossWeek.boss_emoji ?? defaultBoss.emoji,
@@ -192,9 +212,7 @@ const normalizeBoss = (bossWeek, damageRows = [], guildPoints = 100, todayKeyStr
      phase,
      damageByMember,
      damageByMemberToday,
-     logs: [
-       { id: `boss-${bossWeek.id}`, text: `⚔️ Битва с "${bossWeek.boss_name ?? defaultBoss.name}" активна`, at: Date.now(), type: 'info' },
-     ],
+     logs,
    };
  };
 
@@ -536,6 +554,25 @@ export const useStore = create((set, get) => ({
         ? await supabase.from('boss_damage').select('*').eq('boss_week_id', bossWeek.id)
         : { data: [] };
 
+      const { data: bossLogs } = bossWeek
+        ? await supabase
+            .from('boss_logs')
+            .select('*')
+            .eq('boss_week_id', bossWeek.id)
+            .order('created_at', { ascending: false })
+            .limit(100)
+        : { data: [] };
+
+      const logsFromDb = safeArray(bossLogs).map((log) => ({
+        id: log.id,
+        text: log.log_text,
+        type: log.log_type,
+        at: new Date(log.created_at).getTime(),
+        damage: log.damage_amount || 0,
+      }));
+
+      const savedLogs = logsFromDb.length > 0 ? logsFromDb : get().boss?.logs || [];
+
       const memberCollectionsMap = normalizeMemberCollections(memberCollectionsData || [], membersData);
       const selectedMember = membersData.find(m => m.user_id === userId) || membersData[0];
 
@@ -575,7 +612,7 @@ export const useStore = create((set, get) => ({
         memberCollections: memberCollectionsMap,
         currentCollectionMember: selectedMember?.id,
         exchanges: exchangesData,
-        boss: normalizeBoss(bossWeek, bossDamage),
+        boss: normalizeBoss(bossWeek, bossDamage, guildPoints, todayKey(), savedLogs),
         guildPoints,
         bossDeck: finalBossDeck,
         currentMemberId: selectedMember?.id,
@@ -1050,17 +1087,44 @@ export const useStore = create((set, get) => ({
                .update({ boss_hp_cur: newHp })
               .eq('id', activeBossWeek.id);
 
-              const { error: bossDamageError } = await supabase
-                .from('boss_damage')
-                .insert({
-                  boss_week_id: activeBossWeek.id,
-                  member_id: memberId,
-                  date,
-                  damage,
-                  damage_today: damage,
-                });
-              if (bossDamageError && bossDamageError.code !== '23505') throw bossDamageError;
-           }
+               const { error: bossDamageError } = await supabase
+                 .from('boss_damage')
+                 .insert({
+                   boss_week_id: activeBossWeek.id,
+                   member_id: memberId,
+                   date,
+                   damage,
+                   damage_today: damage,
+                 });
+               if (bossDamageError && bossDamageError.code !== '23505') throw bossDamageError;
+
+               const logType = isCrit ? 'crit' : 'damage';
+               const logText = isCrit
+                 ? `💥 ${member.name} нанёс КРИТ! → ${damage} урона!`
+                 : `⚔️ ${member.name} выполнил «${task.title}» → ${damage} урона`;
+
+               await supabase
+                 .from('boss_logs')
+                 .insert({
+                   boss_week_id: activeBossWeek.id,
+                   member_id: memberId,
+                   log_type: logType,
+                   log_text: logText,
+                   damage_amount: damage,
+                 });
+
+               if (phaseTriggered) {
+                 await supabase
+                   .from('boss_logs')
+                   .insert({
+                     boss_week_id: activeBossWeek.id,
+                     member_id: memberId,
+                     log_type: 'phase',
+                     log_text: '⚠️ Дракон Лени входит в ярость! Теперь атакует дважды!',
+                     damage_amount: 0,
+                   });
+               }
+            }
         }
       } catch (error) {
         console.error('completeTask sync error:', error);

@@ -11,7 +11,6 @@ export const TasksPage = () => {
   const authUserId = useStore((state) => state.authUserId);
   const allTasks = useStore((state) => state.tasks);
   const currentMember = useStore((state) => state.getCurrentMember());
-  const setCurrentMember = useStore((state) => state.setCurrentMember);
   const getMemberProgress = useStore((state) => state.getMemberProgress);
   const isCompleted = useStore((state) => state.isCompleted);
   const [activeMemberId, setActiveMemberId] = useState(currentMember?.id || members[0]?.id);
@@ -46,13 +45,7 @@ export const TasksPage = () => {
   const isOwnProfile = !member.user_id || member.user_id === authUserId;
 
   const chooseMember = (id) => {
-    const target = members.find((m) => m.id === id);
-    if (target?.user_id && target.user_id !== authUserId) {
-      setActiveMemberId(id);
-    } else {
-      setActiveMemberId(id);
-      setCurrentMember(id);
-    }
+    setActiveMemberId(id);
   };
 
   return (
