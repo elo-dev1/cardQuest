@@ -70,6 +70,12 @@ const normalizeFamily = (family) => {
     dailyBonusClaimedAt: family.dailyBonusClaimedAt ?? family.last_login_date ?? null,
     ownedItems: family.ownedItems ?? [],
     equippedItems: family.equippedItems ?? {},
+    ownedEffects: family.ownedEffects ?? family.owned_effects ?? [],
+    activeEffect: family.activeEffect ?? family.active_effect ?? null,
+    ownedBackgrounds: family.ownedBackgrounds ?? family.owned_backgrounds ?? [],
+    activeBackground: family.activeBackground ?? family.active_bg ?? null,
+    activeBoosts: family.activeBoosts ?? family.active_boosts ?? [],
+    boostExpiresAt: family.boostExpiresAt ?? family.boost_expires_at ?? {},
   };
 };
 
@@ -301,9 +307,12 @@ const getBossDeckForMember = (state, memberId) => {
     .filter(Boolean);
 };
 
-const calculateBossDamage = (task, member, state, memberId) => {
+const calculateBossDamage = (task, member, state, memberId, getStore) => {
   const baseDamage = DIFFICULTY_DAMAGE[task.difficulty] || 10;
   let damage = baseDamage;
+
+  const damageMultiplier = getStore ? getStore().getBoostMultiplier('damage') : 1;
+  damage = Math.round(damage * damageMultiplier);
 
   if (task.category === state.boss.weakness) {
     damage *= 2;
@@ -372,11 +381,13 @@ const getStreakCalc = (state) => {
   return streak;
 };
 
-const getRewardForTask = (task, member) => {
+const getRewardForTask = (task, member, getStore) => {
   const base = DIFFICULTY_DAMAGE[task.difficulty] || 10;
+  const xpMultiplier = getStore ? getStore().getBoostMultiplier('xp') : 1;
+  const coinsMultiplier = getStore ? getStore().getBoostMultiplier('money') : 1;
   return {
-    xp: Math.round(base / 2),
-    coins: Math.round(base / 2),
+    xp: Math.round(base / 2 * xpMultiplier),
+    coins: Math.round(base / 2 * coinsMultiplier),
     damage: base,
   };
 };
@@ -408,6 +419,22 @@ const familyPatchToDb = (patch) => {
   if ('gems' in dbPatch) {
     dbPatch.crystals = dbPatch.gems;
     delete dbPatch.gems;
+  }
+  if ('ownedEffects' in dbPatch) {
+    dbPatch.owned_effects = dbPatch.ownedEffects;
+    delete dbPatch.ownedEffects;
+  }
+  if ('activeEffect' in dbPatch) {
+    dbPatch.active_effect = dbPatch.activeEffect;
+    delete dbPatch.activeEffect;
+  }
+  if ('ownedBackgrounds' in dbPatch) {
+    dbPatch.owned_backgrounds = dbPatch.ownedBackgrounds;
+    delete dbPatch.ownedBackgrounds;
+  }
+  if ('activeBackground' in dbPatch) {
+    dbPatch.active_bg = dbPatch.activeBackground;
+    delete dbPatch.activeBackground;
   }
   delete dbPatch.dailyBonusClaimedAt;
   delete dbPatch.ownedItems;
@@ -925,11 +952,11 @@ export const useStore = create((set, get) => ({
     const member = state.members.find((item) => item.id === memberId);
     if (!task || !member) return { wasNewReward: false, reward: { xp: 0, coins: 0, damage: 0 } };
     if (completedOnDate(state.completions, taskId, memberId, date)) {
-      return { wasNewReward: false, reward: getRewardForTask(task, member) };
+      return { wasNewReward: false, reward: getRewardForTask(task, member, get) };
     }
 
-    const reward = getRewardForTask(task, member);
-    const { damage, isCrit } = calculateBossDamage(task, member, state, memberId);
+    const reward = getRewardForTask(task, member, get);
+    const { damage, isCrit } = calculateBossDamage(task, member, state, memberId, get);
     const wasAlreadyAwarded = awardedOnDate(state.rewardsAwarded, taskId, memberId, date);
     const completion = normalizeCompletion({ id: uuidv4(), taskId, memberId, date, completed_at: new Date().toISOString() });
     const award = normalizeReward({ id: uuidv4(), taskId, memberId, date, xp_given: reward.xp, coins_given: reward.coins });
@@ -1326,6 +1353,209 @@ export const useStore = create((set, get) => ({
       }),
     }));
     return { ok: true, alreadyOwned: false };
+  },
+
+  buyEffect: (effect) => {
+    const state = get();
+    if (state.family.ownedEffects?.includes(effect.id)) {
+      commit(set, get, (current) => ({
+        ...current,
+        family: normalizeFamily({
+          ...current.family,
+          activeEffect: effect.id,
+        }),
+      }));
+      if (isSupabaseConfigured && state.family?.id) {
+        runRemote(
+          supabase.from('families').update({ active_effect: effect.id }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+          get,
+          'buyEffect',
+        );
+      }
+      return { ok: true, alreadyOwned: true };
+    }
+    if (state.family.coins < effect.price) return { ok: false, alreadyOwned: false };
+    let newFamily;
+    commit(set, get, (current) => {
+      newFamily = normalizeFamily({
+        ...current.family,
+        coins: current.family.coins - effect.price,
+        ownedEffects: [...(current.family.ownedEffects || []), effect.id],
+        activeEffect: effect.id,
+      });
+      return { ...current, family: newFamily };
+    });
+    if (isSupabaseConfigured && state.family?.id) {
+      runRemote(
+        supabase.from('families').update({
+          owned_effects: newFamily.ownedEffects,
+          active_effect: newFamily.activeEffect,
+          coins: newFamily.coins,
+        }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        get,
+        'buyEffect',
+      );
+    }
+    return { ok: true, alreadyOwned: false };
+  },
+
+  setActiveEffect: (effectId) => {
+    commit(set, get, (current) => ({
+      ...current,
+      family: normalizeFamily({
+        ...current.family,
+        activeEffect: effectId,
+      }),
+    }));
+    if (isSupabaseConfigured && get().family?.id) {
+      runRemote(
+        supabase.from('families').update({ active_effect: effectId }).eq('id', get().family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        get,
+        'setActiveEffect',
+      );
+    }
+  },
+
+  buyBackground: (bg) => {
+    const state = get();
+    if (state.family.ownedBackgrounds?.includes(bg.id)) {
+      commit(set, get, (current) => ({
+        ...current,
+        family: normalizeFamily({
+          ...current.family,
+          activeBackground: bg.id,
+        }),
+      }));
+      if (isSupabaseConfigured && state.family?.id) {
+        runRemote(
+          supabase.from('families').update({ active_bg: bg.id }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+          get,
+          'buyBackground',
+        );
+      }
+      return { ok: true, alreadyOwned: true };
+    }
+    if (state.family.coins < bg.price) return { ok: false, alreadyOwned: false };
+    let newFamily;
+    commit(set, get, (current) => {
+      newFamily = normalizeFamily({
+        ...current.family,
+        coins: current.family.coins - bg.price,
+        ownedBackgrounds: [...(current.family.ownedBackgrounds || []), bg.id],
+        activeBackground: bg.id,
+      });
+      return { ...current, family: newFamily };
+    });
+    if (isSupabaseConfigured && state.family?.id) {
+      runRemote(
+        supabase.from('families').update({
+          owned_backgrounds: newFamily.ownedBackgrounds,
+          active_bg: newFamily.activeBackground,
+          coins: newFamily.coins,
+        }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        get,
+        'buyBackground',
+      );
+    }
+    return { ok: true, alreadyOwned: false };
+  },
+
+  setActiveBackground: (bgId) => {
+    commit(set, get, (current) => ({
+      ...current,
+      family: normalizeFamily({
+        ...current.family,
+        activeBackground: bgId,
+      }),
+    }));
+    if (isSupabaseConfigured && get().family?.id) {
+      runRemote(
+        supabase.from('families').update({ active_bg: bgId }).eq('id', get().family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        get,
+        'setActiveBackground',
+      );
+    }
+  },
+
+  buyBoost: (boost) => {
+    const state = get();
+    const now = Date.now();
+    const expiresAt = state.family.boostExpiresAt?.[boost.id];
+    const isActive = expiresAt && expiresAt > now;
+    const alreadyActive = isActive;
+
+    if (state.family.coins < boost.price) return { ok: false, alreadyActive: false };
+
+    const newExpiresAt = isActive
+      ? expiresAt + 24 * 60 * 60 * 1000
+      : now + 24 * 60 * 60 * 1000;
+
+    const newActiveBoosts = state.family.activeBoosts?.includes(boost.id)
+      ? state.family.activeBoosts
+      : [...(state.family.activeBoosts || []), boost.id];
+
+    const newBoostExpiresAt = {
+      ...(state.family.boostExpiresAt || {}),
+      [boost.id]: newExpiresAt,
+    };
+
+    commit(set, get, (current) => ({
+      ...current,
+      family: normalizeFamily({
+        ...current.family,
+        coins: current.family.coins - boost.price,
+        activeBoosts: newActiveBoosts,
+        boostExpiresAt: newBoostExpiresAt,
+      }),
+    }));
+
+    if (isSupabaseConfigured && state.family?.id) {
+      runRemote(
+        supabase.from('families').update({
+          active_boosts: newActiveBoosts,
+          boost_expires_at: newBoostExpiresAt,
+          coins: state.family.coins - boost.price,
+        }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        get,
+        'buyBoost',
+      );
+    }
+
+    return { ok: true, alreadyActive };
+  },
+
+  isBoostActive: (boostId) => {
+    const state = get();
+    const expiresAt = state.family.boostExpiresAt?.[boostId];
+    if (!expiresAt) return false;
+    if (Date.now() > expiresAt) return false;
+    return true;
+  },
+
+  getActiveBoosts: () => {
+    const state = get();
+    const now = Date.now();
+    const activeBoosts = [];
+    for (const boostId of state.family.activeBoosts || []) {
+      const expiresAt = state.family.boostExpiresAt?.[boostId];
+      if (expiresAt && expiresAt > now) {
+        activeBoosts.push(boostId);
+      }
+    }
+    return activeBoosts;
+  },
+
+  getBoostMultiplier: (boostType) => {
+    const state = get();
+    const now = Date.now();
+    let multiplier = 1;
+    for (const boostId of state.family.activeBoosts || []) {
+      const expiresAt = state.family.boostExpiresAt?.[boostId];
+      if (expiresAt && expiresAt > now && boostId.includes(boostType)) {
+        multiplier *= 2;
+      }
+    }
+    return multiplier;
   },
 
   claimDailyBonus: () => {

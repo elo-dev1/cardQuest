@@ -26,6 +26,7 @@ export const AddTaskModal = ({ open, onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const addTask = useStore((state) => state.addTask);
   const addToast = useStore((state) => state.addToast);
+  const members = useStore((state) => state.members);
 
   useEffect(() => {
     if (open) setForm({ title: '', category: 'home', assigned_to: 'all', repeat_type: 'daily' });
@@ -102,7 +103,7 @@ export const AddTaskModal = ({ open, onClose }) => {
 
             <div className="mb-4">
               <div className="mb-2 text-sm font-black text-[var(--text-primary)]">Кому назначить</div>
-              <div className="flex gap-2">
+              <div className="mb-2 flex flex-wrap gap-2">
                 {ASSIGN_TO_OPTIONS.map((opt) => (
                   <button
                     type="button"
@@ -113,6 +114,20 @@ export const AddTaskModal = ({ open, onClose }) => {
                     onClick={() => setForm((f) => ({ ...f, assigned_to: opt.value }))}
                   >
                     {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {members.map((member) => (
+                  <button
+                    type="button"
+                    key={member.id}
+                    className={`rounded-xl border px-4 py-2 text-sm font-black transition ${
+                      form.assigned_to === member.id ? 'border-[var(--c-purple)] bg-[var(--c-purple-pale)] text-[var(--c-purple)]' : 'border-gray-200 bg-white text-gray-700'
+                    }`}
+                    onClick={() => setForm((f) => ({ ...f, assigned_to: member.id }))}
+                  >
+                    {member.avatar} {member.name}
                   </button>
                 ))}
               </div>
