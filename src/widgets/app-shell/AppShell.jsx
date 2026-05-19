@@ -5,6 +5,7 @@ import { ProfileSelectScreen } from '@/features/profile-select/ProfileSelectScre
 import { PackOpener } from '@/features/pack-opener/PackOpener';
 import { ToastContainer } from '@/shared/ui/ToastContainer';
 import { GlobalConfetti } from '@/shared/ui/GlobalConfetti';
+import { TaskEffect } from '@/shared/ui/TaskEffect';
 import { useStore } from '@/shared/store/useStore';
 
 export const AppShell = () => {
@@ -25,6 +26,7 @@ export const AppShell = () => {
       <PackOpener />
       <ToastContainer />
       <GlobalConfetti />
+      <TaskEffect />
     </div>
   );
 };

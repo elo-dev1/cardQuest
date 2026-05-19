@@ -1,11 +1,15 @@
 import { HERO_CLASSES } from '@/shared/data/memberData';
 import { useStore } from '@/shared/store/useStore';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
+import { BACKGROUND_TYPES } from '@/shared/data/shopItems';
 
 export const FamilyPage = () => {
+  const family = useStore((state) => state.family);
   const members = useStore((state) => state.members);
   const getMemberProgress = useStore((state) => state.getMemberProgress);
   const addToast = useStore((state) => state.addToast);
+  const activeBg = BACKGROUND_TYPES.find((bg) => bg.id === family?.activeBackground);
+
   const podium = members.slice().sort((a, b) => b.xp - a.xp);
   const [second, first, third] = [podium[1], podium[0], podium[2]];
   const podiumItems = [
@@ -21,7 +25,19 @@ export const FamilyPage = () => {
         <p className="text-sm font-bold text-white/50">Герои, уровни и общий челлендж</p>
       </header>
 
-      <section className="card overflow-hidden p-8" style={{ background: 'linear-gradient(to bottom, #fff, rgba(245,158,11,0.08))' }}>
+      <section
+        className="card overflow-hidden p-8"
+        style={
+          activeBg
+            ? { 
+                backgroundImage: `url(${activeBg.image})`, 
+                backgroundSize: 'cover', 
+                backgroundPosition: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.2)' 
+              }
+            : { background: 'linear-gradient(to bottom, #fff, rgba(245,158,11,0.08))' }
+        }
+      >
         <div className="flex items-end justify-center gap-8">
           {podiumItems.map(({ member, medal, avatar, xp, y }) => (
             <div key={member.id} className={`text-center ${y}`}>
@@ -29,9 +45,9 @@ export const FamilyPage = () => {
                 <span className="grid h-full w-full place-items-center rounded-full bg-white">{member.avatar}</span>
               </div>
               <div className="mt-3 text-2xl">{medal}</div>
-              <div className="font-black text-[var(--text-primary)]">{member.name}</div>
+              <div className={`font-black ${activeBg ? 'text-white' : 'text-[var(--text-primary)]'}`}>{member.name}</div>
               <div className={`gradient-text ${xp} font-black leading-none`}>{member.xp}</div>
-              <div className="text-xs font-black text-[var(--text-muted)]">XP</div>
+              <div className={`text-xs font-black ${activeBg ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>XP</div>
             </div>
           ))}
         </div>

@@ -4,6 +4,7 @@ import { HERO_CLASSES } from '@/shared/data/memberData';
 import { AddChildModal } from '@/features/add-child/ui/AddChildModal';
 import { generateInviteCode, getFamilyInvitations, getInviteUrl, revokeInvitation } from '@/features/invite/model/inviteActions';
 import { useStore } from '@/shared/store/useStore';
+import { authActions } from '@/features/auth/model/authActions';
 
 const roleLabels = {
   owner: 'Владелец',
@@ -76,6 +77,17 @@ export const SettingsPage = () => {
     if (!window.confirm('Сбросить локальный прогресс Card Quest на этом устройстве?')) return;
     resetData();
     navigate('/setup', { replace: true });
+  };
+
+  const handleLogout = async () => {
+    if (!window.confirm('Вы действительно хотите выйти из аккаунта?')) return;
+    try {
+      await authActions.signOut();
+      addToast('Вы успешно вышли из системы.', 'info');
+      navigate('/auth', { replace: true });
+    } catch (error) {
+      addToast(error.message || 'Ошибка при выходе', 'error');
+    }
   };
 
   const submitChild = async (child) => {
@@ -290,6 +302,19 @@ export const SettingsPage = () => {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="card p-5">
+        <h2 className="text-xl font-black text-[var(--text-primary)]">Аккаунт</h2>
+        <hr className="my-4 border-gray-100" />
+        <button type="button" className="btn-logout w-full py-3 flex items-center justify-center gap-2 transition" onClick={handleLogout}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Выйти из аккаунта
+        </button>
       </section>
 
       <section className="card p-5">

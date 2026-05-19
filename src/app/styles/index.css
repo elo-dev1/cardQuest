@@ -122,6 +122,36 @@ button {
   padding: 10px 20px;
 }
 
+html.light .btn-ghost {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.btn-logout {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #ffe4e6;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.btn-logout:hover {
+  background: #ffe4e6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.1);
+}
+
+.btn-logout:active {
+  transform: translateY(0);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #f59e0b, #f97316, #ec4899);
   -webkit-background-clip: text;
@@ -484,3 +514,88 @@ button {
 .victory-ray:nth-child(4) { animation-delay: -1s; animation-duration: 9s; }
 .victory-ray:nth-child(5) { animation-delay: -3s; animation-duration: 11s; }
 .victory-ray:nth-child(6) { animation-delay: -5s; animation-duration: 8s; }
+
+@keyframes taskEffectGolden {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5) rotate(var(--tr));
+  }
+}
+
+@keyframes taskEffectFirework {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--tr));
+  }
+}
+
+@keyframes taskEffectMagic {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.8) rotate(var(--tr));
+  }
+}
+
+@keyframes taskEffectRain {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -200%) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 400px)) rotate(var(--tr));
+  }
+}
+
+@keyframes taskEffectBurst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.1);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.5) rotate(var(--tr));
+  }
+}
+
+@keyframes effectRingExpand {
+  0% {
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+    border-width: 4px;
+  }
+  100% {
+    opacity: 0;
+    width: 300px;
+    height: 300px;
+    border-width: 1px;
+  }
+}

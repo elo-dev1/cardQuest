@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CATEGORIES, DIFFICULTY } from '@/shared/data/taskTemplates';
 import { useStore } from '@/shared/store/useStore';
-import { fireConfetti } from '@/shared/lib/confetti';
+import { fireConfetti, fireTaskEffect } from '@/shared/lib/confetti';
 
 export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) => {
   const completeTask = useStore((state) => state.completeTask);
   const uncompleteTask = useStore((state) => state.uncompleteTask);
   const isCompleted = useStore((state) => state.isCompleted(task.id, memberId));
   const addToast = useStore((state) => state.addToast);
+  const activeEffect = useStore((state) => state.family?.activeEffect);
   const [floating, setFloating] = useState(null);
   const category = CATEGORIES[task.category];
   const difficulty = DIFFICULTY[task.difficulty];
@@ -21,7 +22,11 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
     }
     const result = await completeTask(task.id, memberId);
     if (result.wasNewReward) {
-      fireConfetti();
+      if (activeEffect) {
+        fireTaskEffect(activeEffect.replace('effect_', ''));
+      } else {
+        fireConfetti();
+      }
       setFloating(`+${result.reward.xp} XP · +${result.reward.coins} 💰`);
       addToast(`Молодец! +${result.reward.xp} XP заработано 🎉`, 'reward');
       window.setTimeout(() => setFloating(null), 1500);
