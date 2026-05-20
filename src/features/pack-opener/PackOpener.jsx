@@ -92,11 +92,11 @@ export const PackOpener = () => {
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className={`fixed inset-0 z-[9999] grid place-items-center overflow-hidden p-6 text-white ${
-            results.some((item) => item.card.rarity === 'legendary') ? 'glow-gold' : ''
+          className={`fixed inset-0 z-[9999] grid place-items-center overflow-hidden p-6 ${
+            results.some((item) => item.card.rarity === 'legendary') ? '' : ''
           }`}
           style={{
-            background: 'radial-gradient(ellipse at 50% 40%, rgba(79,46,220,0.4), rgba(15,10,46,0.97))',
+            background: 'radial-gradient(ellipse at 50% 40%, rgba(201,168,124,0.15), var(--bg-app))',
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -110,7 +110,7 @@ export const PackOpener = () => {
                 style={{
                   left: `${8 + Math.random() * 84}%`,
                   top: `${8 + Math.random() * 84}%`,
-                  background: ['#f59e0b', '#a855f7', '#22c55e', '#ec4899'][index % 4],
+                  background: ['var(--sand)', 'var(--lavender)', 'var(--sage)', '#ec4899'][index % 4],
                   opacity: 0.4,
                 }}
               />
@@ -120,17 +120,17 @@ export const PackOpener = () => {
           {step === 'intro' ? (
             <motion.div className="relative z-10 w-full max-w-[360px] text-center" initial={{ y: 20 }} animate={{ y: 0 }}>
               <div
-                className="float-soft mx-auto mb-8 grid h-[180px] w-[140px] place-items-center rounded-[22px] border-2 border-amber-200 text-6xl shadow-gold"
-                style={{ background: `linear-gradient(145deg, ${pack.color}, #f59e0b)` }}
+                className="float-soft mx-auto mb-8 grid h-[180px] w-[140px] place-items-center rounded-[var(--r-lg)] border-2 border-[var(--sand-light)] text-6xl"
+                style={{ background: `linear-gradient(145deg, ${pack.color}, var(--sand-light))` }}
               >
                 {pack.emoji}
               </div>
-              <div className="mb-1 text-xl font-black">Отличная работа!</div>
-              <h2 className="gradient-text mb-6 text-4xl font-black">ПАКЕТ НАГРАД</h2>
+              <div className="mb-1 text-xl font-semibold text-[var(--text-primary)]">Отличная работа!</div>
+              <h2 className="font-['DM_Serif_Display'] mb-6 text-4xl text-[var(--sand)]">ПАКЕТ НАГРАД</h2>
               <button type="button" className="btn-primary mb-3 w-full" onClick={openPack}>
                 Открыть пак
               </button>
-              <button type="button" className="btn-ghost w-full" onClick={close}>
+              <button type="button" className="btn-secondary w-full" onClick={close}>
                 Оставить на потом
               </button>
             </motion.div>
@@ -139,12 +139,12 @@ export const PackOpener = () => {
           {step === 'burst' ? (
             <div className="relative z-10 grid place-items-center">
               <div
-                className="grid h-[180px] w-[140px] place-items-center rounded-[22px] border-2 border-amber-200 text-6xl shadow-gold"
-                style={{ background: `linear-gradient(145deg, ${pack.color}, #f59e0b)`, animation: 'packBurst 0.75s ease forwards' }}
+                className="grid h-[180px] w-[140px] place-items-center rounded-[var(--r-lg)] border-2 border-[var(--sand-light)] text-6xl"
+                style={{ background: `linear-gradient(145deg, ${pack.color}, var(--sand-light))`, animation: 'packBurst 0.75s ease forwards' }}
               >
                 {pack.emoji}
               </div>
-              <div className="absolute top-16 h-48 w-48 rounded-full bg-amber-100/40 blur-3xl" />
+              <div className="absolute top-16 h-48 w-48 rounded-full bg-[var(--sand-bg)]/40 blur-3xl" />
             </div>
           ) : null}
 
@@ -158,7 +158,7 @@ export const PackOpener = () => {
                     style={{ transform: step === 'reveal' ? `rotate(${(index - (cards.length - 1) / 2) * 8}deg)` : 'none' }}
                   >
                     <div className={`pack-card-inner relative h-full w-full ${revealed > index || step === 'summary' ? 'is-flipped' : ''}`}>
-                      <div className="pack-card-back absolute inset-0 grid place-items-center rounded-[14px] border-2 border-amber-200 bg-gradient-to-br from-violet-700 to-amber-500 text-4xl shadow-gold">
+                      <div className="pack-card-back absolute inset-0 grid place-items-center rounded-[var(--r-md)] border-2 border-[var(--sand-light)] bg-gradient-to-br from-[var(--lavender)] to-[var(--sand)] text-4xl">
                         ⚔️
                       </div>
                       <div className="pack-card-face absolute inset-0">
@@ -171,8 +171,8 @@ export const PackOpener = () => {
 
               {step === 'summary' ? (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                  <h2 className="gradient-text mb-2 text-3xl font-black">Награды получены!</h2>
-                  <p className="mb-5 text-lg font-extrabold text-white/80">
+                  <h2 className="font-['DM_Serif_Display'] mb-2 text-3xl text-[var(--sand)]">Награды получены!</h2>
+                  <p className="mb-5 text-lg font-medium text-[var(--text-secondary)]">
                     Новых карточек: {newCount}
                   </p>
                   <div className="mx-auto flex max-w-[420px] gap-3">
@@ -192,7 +192,7 @@ export const PackOpener = () => {
                   </div>
                 </motion.div>
               ) : (
-                <div className="text-lg font-black text-white/70">Карты пробуждаются...</div>
+                <div className="text-lg font-medium text-[var(--text-secondary)]">Карты пробуждаются...</div>
               )}
             </div>
           ) : null}

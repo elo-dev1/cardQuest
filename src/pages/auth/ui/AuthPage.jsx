@@ -82,12 +82,12 @@ export const AuthPage = () => {
     return (
       <main
         className="grid min-h-screen place-items-center p-6"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25), transparent 60%), #1a1040' }}
+        style={{ background: 'var(--bg-app)' }}
       >
-        <section className="w-full max-w-[440px] rounded-[24px] bg-white p-10 text-center shadow-card">
+        <section className="w-full max-w-[440px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-10 text-center shadow-md border border-[var(--border-soft)]">
           <div className="mb-4 text-6xl">📧</div>
-          <h1 className="gradient-text mb-2 text-3xl font-black">Проверь почту</h1>
-          <p className="mb-6 text-sm font-bold text-[var(--text-muted)]">Мы отправили письмо на {checkEmail}.</p>
+          <h1 className="font-['DM_Serif_Display'] text-3xl text-[var(--text-primary)] mb-2">Проверь почту</h1>
+          <p className="mb-6 text-sm font-medium text-[var(--text-secondary)]">Мы отправили письмо на {checkEmail}.</p>
           <button type="button" className="btn-secondary w-full" onClick={() => setCheckEmail('')}>
             Вернуться ко входу
           </button>
@@ -99,21 +99,21 @@ export const AuthPage = () => {
   return (
     <main
       className="grid min-h-screen place-items-center p-6"
-      style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25), transparent 60%), #1a1040' }}
+      style={{ background: 'var(--bg-app)' }}
     >
-      <form className="w-full max-w-[440px] rounded-[24px] bg-white p-8 shadow-card sm:p-10" onSubmit={submit}>
-        <h1 className="gradient-text mb-1 text-center text-[32px] font-black">⚔️ Card Quest</h1>
-        <p className="mb-6 text-center text-sm font-extrabold text-[var(--text-muted)]">
+      <form className="w-full max-w-[440px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-8 shadow-md border border-[var(--border-soft)] sm:p-10" onSubmit={submit}>
+        <h1 className="font-['DM_Serif_Display'] text-center text-[32px] text-[var(--text-primary)] mb-1">⚔️ Card Quest</h1>
+        <p className="mb-6 text-center text-sm font-medium text-[var(--text-secondary)]">
           {tab === 'signin' ? 'Войди в свою гильдию' : 'Создай аккаунт гильдии'}
         </p>
 
         {!isSupabaseConfigured ? (
-          <div className="mb-5 rounded-xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+          <div className="mb-5 rounded-[var(--r-md)] bg-[var(--sand-bg)] px-4 py-3 text-sm font-medium text-[var(--sand)]">
             Supabase не настроен, поэтому включён локальный email/password режим в этом браузере.
           </div>
         ) : null}
 
-        <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1">
+        <div className="mb-6 inline-grid grid-cols-2 gap-1 rounded-full bg-[var(--bg-elevated)] p-1 w-full">
           {[
             { value: 'signin', label: 'Войти' },
             { value: 'signup', label: 'Зарегистрироваться' },
@@ -121,8 +121,8 @@ export const AuthPage = () => {
             <button
               key={item.value}
               type="button"
-              className={`rounded-lg px-3 py-2 text-sm font-black transition ${
-                tab === item.value ? 'bg-white text-[var(--c-purple)] shadow-card' : 'text-gray-500'
+              className={`rounded-full px-3 py-2 text-sm font-medium transition ${
+                tab === item.value ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)]'
               }`}
               onClick={() => {
                 setTab(item.value);
@@ -137,19 +137,19 @@ export const AuthPage = () => {
         <div className="grid gap-4">
           {tab === 'signup' ? (
             <label className="block">
-              <span className="mb-1 block text-sm font-black text-[var(--text-primary)]">Твоё имя</span>
+              <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Твоё имя</span>
               <input
                 className="input-field"
                 value={form.displayName}
                 onChange={(event) => updateField('displayName', event.target.value)}
                 placeholder="Мама"
               />
-              {validation.displayName ? <span className="mt-1 block text-xs font-bold text-red-500">{validation.displayName}</span> : null}
+              {validation.displayName ? <span className="mt-1 block text-xs font-medium text-[var(--clay)]">{validation.displayName}</span> : null}
             </label>
           ) : null}
 
           <label className="block">
-            <span className="mb-1 block text-sm font-black text-[var(--text-primary)]">Email</span>
+            <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Email</span>
             <input
               className="input-field"
               type="email"
@@ -157,12 +157,12 @@ export const AuthPage = () => {
               onChange={(event) => updateField('email', event.target.value)}
               placeholder="you@example.com"
             />
-            {validation.email ? <span className="mt-1 block text-xs font-bold text-red-500">{validation.email}</span> : null}
+            {validation.email ? <span className="mt-1 block text-xs font-medium text-[var(--clay)]">{validation.email}</span> : null}
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-black text-[var(--text-primary)]">Пароль</span>
-            <div className="flex rounded-xl border-[1.5px] border-gray-200 bg-[var(--bg-input)] focus-within:border-[var(--c-purple)]">
+            <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Пароль</span>
+            <div className="flex rounded-[var(--r-md)] border-[1.5px] border-transparent bg-[var(--bg-elevated)] focus-within:border-[var(--border-strong)] focus-within:bg-[var(--bg-surface)] transition">
               <input
                 className="min-w-0 flex-1 bg-transparent px-4 py-3 outline-none"
                 type={showPassword ? 'text' : 'password'}
@@ -170,17 +170,17 @@ export const AuthPage = () => {
                 onChange={(event) => updateField('password', event.target.value)}
                 placeholder="Минимум 8 символов"
               />
-              <button type="button" className="px-4 font-black text-gray-400" onClick={() => setShowPassword((value) => !value)}>
+              <button type="button" className="px-4 font-medium text-[var(--text-tertiary)]" onClick={() => setShowPassword((value) => !value)}>
                 {showPassword ? '🙈' : '👁'}
               </button>
             </div>
-            {validation.password ? <span className="mt-1 block text-xs font-bold text-red-500">{validation.password}</span> : null}
+            {validation.password ? <span className="mt-1 block text-xs font-medium text-[var(--clay)]">{validation.password}</span> : null}
           </label>
 
           {tab === 'signup' ? (
             <label className="block">
-              <span className="mb-1 block text-sm font-black text-[var(--text-primary)]">Повтори пароль</span>
-              <div className="flex rounded-xl border-[1.5px] border-gray-200 bg-[var(--bg-input)] focus-within:border-[var(--c-purple)]">
+              <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Повтори пароль</span>
+              <div className="flex rounded-[var(--r-md)] border-[1.5px] border-transparent bg-[var(--bg-elevated)] focus-within:border-[var(--border-strong)] focus-within:bg-[var(--bg-surface)] transition">
                 <input
                   className="min-w-0 flex-1 bg-transparent px-4 py-3 outline-none"
                   type={showConfirm ? 'text' : 'password'}
@@ -188,16 +188,16 @@ export const AuthPage = () => {
                   onChange={(event) => updateField('confirm', event.target.value)}
                   placeholder="Ещё раз пароль"
                 />
-                <button type="button" className="px-4 font-black text-gray-400" onClick={() => setShowConfirm((value) => !value)}>
+                <button type="button" className="px-4 font-medium text-[var(--text-tertiary)]" onClick={() => setShowConfirm((value) => !value)}>
                   {showConfirm ? '🙈' : '👁'}
                 </button>
               </div>
-              {validation.confirm ? <span className="mt-1 block text-xs font-bold text-red-500">{validation.confirm}</span> : null}
+              {validation.confirm ? <span className="mt-1 block text-xs font-medium text-[var(--clay)]">{validation.confirm}</span> : null}
             </label>
           ) : null}
         </div>
 
-        {error ? <div className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</div> : null}
+        {error ? <div className="mt-5 rounded-[var(--r-md)] bg-[var(--clay-bg)] px-4 py-3 text-sm font-medium text-[var(--clay)]">{error}</div> : null}
 
         <button type="submit" className="btn-primary mt-6 w-full" disabled={!canSubmit || isSubmitting}>
           {isSubmitting ? 'Подождите...' : tab === 'signin' ? 'Войти' : 'Создать аккаунт'}
@@ -206,18 +206,18 @@ export const AuthPage = () => {
         {tab === 'signin' ? (
           <button
             type="button"
-            className="mt-4 w-full text-sm font-black text-[var(--text-purple)]"
+            className="mt-4 w-full text-sm font-medium text-[var(--slate)]"
             onClick={() => authActions.resetPassword(form.email).catch((resetError) => setError(resetError.message))}
           >
             Забыл пароль?
           </button>
         ) : (
-          <button type="button" className="mt-4 w-full text-sm font-black text-[var(--text-purple)]" onClick={() => setTab('signin')}>
+          <button type="button" className="mt-4 w-full text-sm font-medium text-[var(--slate)]" onClick={() => setTab('signin')}>
             Уже есть аккаунт? Войти
           </button>
         )}
 
-        <Link to="/" className="mt-5 block text-center text-xs font-bold text-gray-400">
+        <Link to="/" className="mt-5 block text-center text-xs font-medium text-[var(--text-tertiary)]">
           Вернуться в приложение
         </Link>
       </form>

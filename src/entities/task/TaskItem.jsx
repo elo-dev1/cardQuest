@@ -4,6 +4,15 @@ import { CATEGORIES, DIFFICULTY } from '@/shared/data/taskTemplates';
 import { useStore } from '@/shared/store/useStore';
 import { fireConfetti, fireTaskEffect } from '@/shared/lib/confetti';
 
+const categoryBorderColors = {
+  health: '#06b6d4',
+  activity: '#f97316',
+  study: '#3b82f6',
+  home: '#10b981',
+  care: '#ec4899',
+  special: '#8b5cf6',
+};
+
 export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) => {
   const completeTask = useStore((state) => state.completeTask);
   const uncompleteTask = useStore((state) => state.uncompleteTask);
@@ -11,8 +20,10 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
   const addToast = useStore((state) => state.addToast);
   const activeEffect = useStore((state) => state.family?.activeEffect);
   const [floating, setFloating] = useState(null);
+  const [animating, setAnimating] = useState(false);
   const category = CATEGORIES[task.category];
   const difficulty = DIFFICULTY[task.difficulty];
+  const borderColor = categoryBorderColors[task.category] || '#8b5cf6';
 
   const toggle = async () => {
     if (!isInteractive) return;
@@ -20,6 +31,8 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
       await uncompleteTask(task.id, memberId);
       return;
     }
+    setAnimating(true);
+    setTimeout(() => setAnimating(false), 350);
     const result = await completeTask(task.id, memberId);
     if (result.wasNewReward) {
       if (activeEffect) {
@@ -37,35 +50,52 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
     <motion.button
       type="button"
       onClick={isInteractive ? toggle : undefined}
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06 }}
-      className={`relative flex min-h-[86px] w-full items-center gap-3 rounded-[14px] border-[1.5px] p-4 text-left transition hover:-translate-y-0.5 ${
-        isCompleted ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white hover:border-purple-200 hover:shadow-card'
+      transition={{ delay: index * 0.04 }}
+      className={`task-card relative flex w-full items-center gap-4 rounded-[var(--r-md)] border border-[var(--border-soft)] p-4 text-left transition-all duration-[400ms] ${
+        isCompleted
+          ? 'bg-[var(--sage-bg)] border-[var(--sage-light)]'
+          : 'bg-[var(--bg-surface)] hover:shadow-sm'
       } ${!isInteractive ? 'opacity-60' : ''}`}
-      style={{ cursor: isInteractive ? 'pointer' : 'default' }}
+      style={{
+        cursor: isInteractive ? 'pointer' : 'default',
+        borderLeft: `8px solid ${isCompleted ? 'var(--sage)' : borderColor}`,
+      }}
     >
-      <span
-        className={`relative grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border-2 text-sm font-black ${
-          isCompleted ? 'border-[var(--c-green)] bg-[var(--c-green)] text-white' : 'border-gray-300 bg-white text-transparent'
-        }`}
-      >
-        ✓
+      <div className="min-w-0 flex-1">
+        <span className={`block text-[16px] font-semibold leading-tight transition-colors ${isCompleted ? 'text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)]'}`}>
+          {task.title}
+        </span>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--bg-elevated)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
+            {category?.icon} {category?.label}
+          </span>
+          <span className="inline-flex rounded-full bg-[var(--bg-elevated)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
+            {difficulty.label}
+          </span>
+        </div>
+      </div>
+
+      <div className="relative shrink-0">
+        <span
+          className={`relative grid h-[28px] w-[28px] place-items-center rounded-full border-2 text-sm font-semibold transition-all duration-[350ms] ${
+            animating ? 'scale-[0.85]' : ''
+          } ${
+            isCompleted
+              ? 'border-[var(--sage)] bg-[var(--sage)] text-white'
+              : 'border-[var(--border-medium)] bg-[var(--bg-surface)] text-transparent'
+          }`}
+          style={animating ? { transform: 'scale(0.85)' } : {}}
+        >
+          ✓
+        </span>
         {floating ? (
-          <span className="points-float pointer-events-none absolute -top-2 left-5 whitespace-nowrap text-xs font-black text-[var(--c-gold)]">
+          <span className="points-float pointer-events-none absolute -top-2 left-5 whitespace-nowrap text-xs font-semibold text-[var(--sand)]">
             {floating}
           </span>
         ) : null}
-      </span>
-      <span className="text-xl">{category?.icon}</span>
-      <span className="min-w-0 flex-1">
-        <span className={`block text-[15px] font-black leading-tight ${isCompleted ? 'text-gray-400 line-through' : 'text-[var(--text-primary)]'}`}>
-          {task.title}
-        </span>
-        <span className="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">
-          {difficulty.label}
-        </span>
-      </span>
+      </div>
     </motion.button>
   );
 };

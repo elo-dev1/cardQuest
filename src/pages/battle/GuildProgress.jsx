@@ -19,25 +19,25 @@ export const GuildProgress = () => {
     }), [members, boss]);
 
   return (
-    <div className="card p-5">
-      <h2 className="mb-4 text-lg font-black text-[var(--text-primary)]">Урон по боссу</h2>
+    <div className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+      <h2 className="mb-4 text-[15px] font-semibold text-[var(--text-primary)]">Урон по боссу</h2>
 
       <div className="mb-5 space-y-4">
         {membersWithProgress.map((member) => (
           <div key={member.id}>
-            <div className="mb-1 flex items-center justify-between text-sm font-black">
+            <div className="mb-1 flex items-center justify-between text-sm font-medium">
               <span className="flex items-center gap-2">
                 <span>{member.avatar}</span>
-                <span>{member.name}</span>
+                <span className="text-[var(--text-primary)]">{member.name}</span>
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-red-500">{member.damage}</span>
+                <span className="text-[var(--clay)]">{member.damage}</span>
                 {member.todayDmg > 0 ? (
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-bold text-green-700">
+                  <span className="rounded-full bg-[var(--sage-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--sage)]">
                     +{member.todayDmg} сегодня
                   </span>
                 ) : (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-500">
+                  <span className="rounded-full bg-[var(--bg-elevated)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-tertiary)]">
                     ⚠️ Не атаковал
                   </span>
                 )}
@@ -45,15 +45,15 @@ export const GuildProgress = () => {
             </div>
             <ProgressBar
               value={totalDamage > 0 ? (member.damage / totalDamage) * 100 : 0}
-              height={7}
-              color="linear-gradient(90deg,#7c3aed,#a855f7)"
+              height={6}
+              variant="lavender"
             />
           </div>
         ))}
       </div>
 
-      <div className="rounded-xl bg-[#f8f7ff] p-4 text-center text-sm font-black text-[var(--text-primary)]">
-        Всего сегодня: <span className="text-red-500">{todayDamage}</span> урона из <span>{boss.maxHp}</span> HP
+      <div className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-4 text-center text-sm font-medium text-[var(--text-primary)]">
+        Всего сегодня: <span className="text-[var(--clay)]">{todayDamage}</span> урона из <span>{boss.maxHp}</span> HP
       </div>
     </div>
   );

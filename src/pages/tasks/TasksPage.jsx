@@ -50,60 +50,67 @@ export const TasksPage = () => {
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-wrap gap-2">
+      {/* Аватары участников */}
+      <header className="flex gap-3 overflow-x-auto pb-1">
         {members.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => chooseMember(item.id)}
-            className={`rounded-full px-4 py-2 text-sm font-black transition ${
-              item.id === member?.id ? 'bg-[var(--c-purple)] text-white shadow-purple' : 'bg-white/10 text-white/60 hover:text-white'
+            className={`flex shrink-0 flex-col items-center gap-1.5 transition ${
+              item.id === member?.id ? '' : 'opacity-50 hover:opacity-80'
             }`}
           >
-            {item.avatar} {item.name}
+            <div className={`grid h-12 w-12 place-items-center rounded-full text-xl transition ${
+              item.id === member?.id ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
+            }`}>
+              {item.avatar}
+            </div>
+            <span className="text-[11px] font-medium text-[var(--text-secondary)]">{item.name.split(' ')[0]}</span>
           </button>
         ))}
       </header>
 
+      {/* Прогресс участника */}
       {member ? (
-        <section className="card-dark p-4">
+        <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
           {!isOwnProfile && (
-            <div className="mb-3 rounded-lg bg-white/5 p-2 text-center text-xs font-bold text-white/50">
+            <div className="mb-3 rounded-[var(--r-sm)] bg-[var(--bg-elevated)] p-2 text-center text-xs font-medium text-[var(--text-tertiary)]">
               👁️ Просмотр профиля
             </div>
           )}
-          <div className="mb-3 flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-white/10 text-3xl">{member.avatar}</div>
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--bg-elevated)] text-2xl">{member.avatar}</div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-black text-white">{member.name}</h1>
+              <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">{member.name}</h1>
               {isOwnProfile && (
-                <p className="text-sm font-bold text-white/55">
-                  {heroClass?.icon} {heroClass?.label} · {progress.completed}/{progress.total} задач · {member.xp} XP · {member.coins} 💰
+                <p className="text-[13px] font-medium text-[var(--text-secondary)]">
+                  {progress.completed} из {progress.total} · {member.xp} XP · {member.coins} 💰
                 </p>
               )}
             </div>
           </div>
-          {isOwnProfile && <ProgressBar value={progress.percent} height={9} color="linear-gradient(90deg,#fde68a,#f59e0b)" />}
+          {isOwnProfile && <ProgressBar value={progress.percent} height={8} variant="sand" className="mt-3" />}
         </section>
       ) : null}
 
+      {/* Кнопка добавления задачи */}
       {isOwnProfile && (
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="mb-3 rounded-full bg-[var(--c-purple)] px-5 py-2.5 text-sm font-black text-white shadow-purple transition hover:-translate-y-0.5"
+          className="btn-primary px-6 py-2.5 text-sm"
         >
           + Новая задача
         </button>
       )}
 
+      {/* Фильтры категорий */}
       <section className="flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => setCategory('all')}
-          className={`shrink-0 rounded-full px-4 py-2 text-sm font-black ${
-            category === 'all' ? 'bg-[var(--c-purple)] text-white' : 'bg-white/10 text-white/60'
-          }`}
+          className={`pill shrink-0 ${category === 'all' ? 'active' : ''}`}
         >
           Все
         </button>
@@ -114,26 +121,26 @@ export const TasksPage = () => {
               key={key}
               type="button"
               onClick={() => setCategory(key)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-black ${
-                category === key ? 'bg-[var(--c-purple)] text-white' : 'bg-white/10 text-white/60'
-              }`}
+              className={`pill shrink-0 ${category === key ? 'active' : ''}`}
             >
               {item.icon} {item.label}
             </button>
           ))}
       </section>
 
+      {/* Задачи */}
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {undone.map((task, index) => (
           <TaskItem key={task.id} task={task} memberId={member.id} index={index} isInteractive={isOwnProfile} />
         ))}
       </section>
 
+      {/* Разделитель */}
       {done.length ? (
-        <div className="flex items-center gap-3 text-sm font-black text-white/35">
-          <span className="h-px flex-1 bg-white/10" />
-          Выполнено ({done.length})
-          <span className="h-px flex-1 bg-white/10" />
+        <div className="flex items-center gap-3 text-[13px] font-medium text-[var(--text-tertiary)]">
+          <span className="h-px flex-1 bg-[var(--border-soft)]" />
+          Осталось ({done.length})
+          <span className="h-px flex-1 bg-[var(--border-soft)]" />
         </div>
       ) : null}
 

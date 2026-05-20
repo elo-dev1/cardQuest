@@ -81,11 +81,11 @@ export const BattlePage = () => {
 
       <BattleLog />
 
-      <div className="card p-4">
-        <div className="flex items-center justify-between text-sm font-bold text-[var(--text-muted)]">
+      <div className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+        <div className="flex items-center justify-between text-sm font-medium text-[var(--text-secondary)]">
           <span>Очки гильдии</span>
           <span className="flex items-center gap-2">
-            <span className="text-xl font-black text-purple-600">{guildPoints}</span>
+            <span className="font-['DM_Serif_Display'] text-xl text-[var(--lavender)]">{guildPoints}</span>
             <span className="text-xs">очков</span>
           </span>
         </div>

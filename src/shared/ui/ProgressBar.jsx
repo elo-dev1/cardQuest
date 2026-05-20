@@ -1,13 +1,14 @@
-export const ProgressBar = ({ value = 0, color = 'linear-gradient(90deg,#fbbf24,#f59e0b)', height = 8, label }) => {
+export const ProgressBar = ({ value = 0, color, height = 8, label, variant = 'sage' }) => {
   const safeValue = Math.max(0, Math.min(100, value));
+  const fillClass = color ? undefined : `progress-fill progress-${variant}`;
 
   return (
     <div className="w-full">
-      {label ? <div className="mb-1 text-xs font-bold text-white/70">{label}</div> : null}
-      <div className="w-full overflow-hidden rounded-full bg-white/10" style={{ height }}>
+      {label ? <div className="mb-1 text-xs font-medium text-[var(--text-secondary)]">{label}</div> : null}
+      <div className="progress-track" style={{ height }}>
         <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${safeValue}%`, background: color }}
+          className={fillClass || 'progress-fill'}
+          style={{ width: `${safeValue}%`, ...(color ? { background: color } : {}) }}
         />
       </div>
     </div>

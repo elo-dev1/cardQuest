@@ -22,24 +22,26 @@ export const Sidebar = () => {
   const levelProgress = member ? member.xp % 120 : 0;
 
   return (
-    <aside className="sticky top-6 h-fit w-[240px] shrink-0 rounded-[20px] border border-[var(--border)] bg-[var(--bg-sidebar)] p-5">
-      <div className="gradient-text mb-5 text-xl font-black">⚔️ Card Quest</div>
+    <aside className="sticky top-6 h-fit w-[220px] shrink-0 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4">
+      <div className="mb-6 px-2 font-['DM_Serif_Display'] text-xl tracking-[-0.02em] text-[var(--text-primary)]">
+        ⚔️ Card Quest
+      </div>
 
       {member ? (
         <button
           type="button"
-          className="mb-5 w-full rounded-[14px] border border-[var(--border)] bg-[var(--c-purple-pale)] p-3 text-left transition hover:bg-white/10"
+          className="mb-5 w-full rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-left transition hover:bg-[var(--bg-surface)]"
           title="Сменить участника"
         >
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-xl">
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-surface)] text-xl">
               {member.avatar}
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-black text-white">
+              <div className="truncate text-sm font-semibold text-[var(--text-primary)]">
                 {member.name}
               </div>
-              <div className="text-xs font-bold text-white/55">
+              <div className="text-xs font-medium text-[var(--text-secondary)]">
                 {heroClass?.icon} {heroClass?.label} · ур. {member.level}
               </div>
             </div>
@@ -48,34 +50,34 @@ export const Sidebar = () => {
             <ProgressBar
               value={(levelProgress / 120) * 100}
               height={6}
-              color="linear-gradient(90deg,#fde68a,#f59e0b)"
+              variant="sand"
             />
           </div>
         </button>
       ) : null}
 
-      <nav className="flex flex-col gap-1">
+      <nav className="flex flex-col gap-0.5">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `rounded-xl px-3.5 py-2.5 text-sm font-extrabold transition ${
+              `flex items-center gap-2.5 rounded-[var(--r-md)] px-3 py-2.5 text-sm font-medium transition ${
                 isActive
-                  ? "border-l-[3px] border-l-[var(--c-purple-mid)] bg-[rgba(124,58,237,0.2)] text-white glow-purple"
-                  : "text-white/50 hover:bg-white/5 hover:text-white/80"
+                  ? 'bg-[var(--charcoal)] text-white font-semibold'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
               }`
             }
           >
-            <span className="mr-2 inline-block w-5">{item.icon}</span>
+            <span className="w-5 text-center text-[17px]">{item.icon}</span>
             {item.label}
           </NavLink>
         ))}
       </nav>
 
-      <hr className="my-5 border-white/10" />
+      <hr className="my-4 border-[var(--border-soft)]" />
 
-      <div className="mb-4 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-sm font-black text-white">
+      <div className="mb-3 flex items-center justify-between rounded-full bg-[var(--bg-elevated)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)]">
         <span>💰 {family?.coins ?? 0}</span>
         <span>💎 {family?.gems ?? 0}</span>
       </div>

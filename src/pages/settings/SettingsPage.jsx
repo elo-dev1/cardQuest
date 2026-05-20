@@ -160,13 +160,14 @@ export const SettingsPage = () => {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-3xl font-black text-white">Настройки</h1>
-        <p className="text-sm font-bold text-white/50">Гильдия, участники, приглашения и данные</p>
+        <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">Настройки</h1>
+        <p className="text-[13px] font-medium text-[var(--text-secondary)]">Гильдия, участники, приглашения и данные</p>
       </header>
 
-      <section className="card p-5">
-        <h2 className="text-xl font-black text-[var(--text-primary)]">Гильдия</h2>
-        <hr className="my-4 border-gray-100" />
+      {/* Гильдия */}
+      <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Гильдия</h2>
+        <hr className="my-4 border-[var(--border-soft)]" />
         <div className="flex flex-col gap-3 sm:flex-row">
           <input className="input-field" value={name} onChange={(event) => setName(event.target.value)} />
           <button type="button" className="btn-primary shrink-0" onClick={saveName}>
@@ -175,37 +176,38 @@ export const SettingsPage = () => {
         </div>
       </section>
 
-      <section className="card p-5">
+      {/* Участники */}
+      <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-black text-[var(--text-primary)]">Участники гильдии</h2>
+          <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Участники гильдии</h2>
           {canManage ? (
             <button type="button" className="btn-secondary px-4 py-2 text-sm" onClick={() => setChildModalOpen(true)}>
               + Добавить ребёнка
             </button>
           ) : null}
         </div>
-        <hr className="my-4 border-gray-100" />
+        <hr className="my-4 border-[var(--border-soft)]" />
         <div className="space-y-3">
           {members.map((member) => {
             const heroClass = HERO_CLASSES[member.classId];
             const canEditChild = canManage && member.member_role === 'child';
             const canDelete = canManage && member.member_role !== 'owner';
             return (
-              <div key={member.id} className="flex flex-wrap items-center gap-3 rounded-2xl bg-gray-50 p-3">
-                <div className="text-3xl">{member.avatar}</div>
+              <div key={member.id} className="flex flex-wrap items-center gap-3 rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3">
+                <div className="text-2xl">{member.avatar}</div>
                 <div className="min-w-[150px] flex-1">
-                  <div className="font-black text-[var(--text-primary)]">{member.name}</div>
-                  <div className="text-xs font-bold text-[var(--text-muted)]">
+                  <div className="font-semibold text-[var(--text-primary)]">{member.name}</div>
+                  <div className="text-xs font-medium text-[var(--text-secondary)]">
                     {heroClass?.icon} {heroClass?.label} · ур. {member.level}
                   </div>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[var(--text-purple)] shadow-card">
+                <span className="rounded-full bg-[var(--bg-surface)] px-3 py-1 text-xs font-medium text-[var(--slate)] shadow-sm">
                   {roleLabels[member.member_role] ?? member.role}
                 </span>
                 {canEditChild ? (
                   <button
                     type="button"
-                    className="rounded-lg bg-white px-3 py-2 text-xs font-black text-[var(--text-purple)] shadow-card"
+                    className="rounded-full bg-[var(--bg-surface)] px-3 py-2 text-xs font-medium text-[var(--slate)] shadow-sm"
                     onClick={() => {
                       setEditingChild(member);
                       setChildModalOpen(true);
@@ -215,7 +217,7 @@ export const SettingsPage = () => {
                   </button>
                 ) : null}
                 {canDelete ? (
-                  <button type="button" className="rounded-lg bg-red-50 px-3 py-2 text-xs font-black text-red-500" onClick={() => deleteMember(member)}>
+                  <button type="button" className="rounded-full bg-[var(--clay-bg)] px-3 py-2 text-xs font-medium text-[var(--clay)]" onClick={() => deleteMember(member)}>
                     Удалить
                   </button>
                 ) : null}
@@ -225,12 +227,13 @@ export const SettingsPage = () => {
         </div>
       </section>
 
+      {/* Приглашения */}
       {canManage ? (
-        <section className="card p-5">
+        <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-black text-[var(--text-primary)]">Приглашения</h2>
-              <p className="text-sm font-bold text-[var(--text-muted)]">Коды для взрослых участников с отдельным аккаунтом.</p>
+              <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Приглашения</h2>
+              <p className="text-[13px] font-medium text-[var(--text-secondary)]">Коды для взрослых участников с отдельным аккаунтом.</p>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -247,14 +250,14 @@ export const SettingsPage = () => {
               </button>
             </div>
           </div>
-          <hr className="my-4 border-gray-100" />
+          <hr className="my-4 border-[var(--border-soft)]" />
           <div className="space-y-3">
             {invitations.length ? (
               invitations.map((invite) => (
-                <div key={invite.id} className={`rounded-2xl bg-gray-50 p-4 ${invite.is_active ? '' : 'opacity-55'}`}>
+                <div key={invite.id} className={`rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-4 ${invite.is_active ? '' : 'opacity-55'}`}>
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-mono text-2xl font-black tracking-[0.18em] text-[var(--text-primary)]">{invite.code}</div>
-                    <div className="text-xs font-black text-[var(--text-muted)]">
+                    <div className="font-mono text-2xl font-semibold tracking-[0.18em] text-[var(--text-primary)]">{invite.code}</div>
+                    <div className="text-xs font-medium text-[var(--text-secondary)]">
                       {formatDate(invite.created_at)} · {invite.uses_count}/{invite.max_uses} использ.
                     </div>
                   </div>
@@ -266,7 +269,7 @@ export const SettingsPage = () => {
                       Поделиться
                     </button>
                     {invite.is_active ? (
-                      <button type="button" className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-500" onClick={() => revoke(invite.id)}>
+                      <button type="button" className="rounded-full bg-[var(--clay-bg)] px-3 py-2 text-xs font-medium text-[var(--clay)]" onClick={() => revoke(invite.id)}>
                         Отозвать
                       </button>
                     ) : null}
@@ -274,7 +277,7 @@ export const SettingsPage = () => {
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl bg-gray-50 p-5 text-center text-sm font-bold text-[var(--text-muted)]">
+              <div className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-5 text-center text-sm font-medium text-[var(--text-secondary)]">
                 Активных приглашений пока нет.
               </div>
             )}
@@ -282,10 +285,11 @@ export const SettingsPage = () => {
         </section>
       ) : null}
 
-      <section className="card p-5">
-        <h2 className="text-xl font-black text-[var(--text-primary)]">Тема</h2>
-        <hr className="my-4 border-gray-100" />
-        <div className="inline-grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1">
+      {/* Тема */}
+      <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Тема</h2>
+        <hr className="my-4 border-[var(--border-soft)]" />
+        <div className="inline-grid grid-cols-2 gap-1 rounded-full bg-[var(--bg-elevated)] p-1">
           {[
             { value: 'dark', label: '🌙 Тёмная' },
             { value: 'light', label: '☀️ Светлая' },
@@ -293,8 +297,8 @@ export const SettingsPage = () => {
             <button
               key={option.value}
               type="button"
-              className={`rounded-lg px-4 py-2 text-sm font-black ${
-                theme === option.value ? 'bg-white text-[var(--c-purple)] shadow-card' : 'text-gray-500'
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                theme === option.value ? 'bg-[var(--bg-surface)] text-[var(--charcoal)] shadow-sm' : 'text-[var(--text-secondary)]'
               }`}
               onClick={() => theme !== option.value && toggleTheme()}
             >
@@ -304,10 +308,11 @@ export const SettingsPage = () => {
         </div>
       </section>
 
-      <section className="card p-5">
-        <h2 className="text-xl font-black text-[var(--text-primary)]">Аккаунт</h2>
-        <hr className="my-4 border-gray-100" />
-        <button type="button" className="btn-logout w-full py-3 flex items-center justify-center gap-2 transition" onClick={handleLogout}>
+      {/* Аккаунт */}
+      <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Аккаунт</h2>
+        <hr className="my-4 border-[var(--border-soft)]" />
+        <button type="button" className="btn-logout w-full flex items-center justify-center gap-2" onClick={handleLogout}>
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
@@ -317,14 +322,15 @@ export const SettingsPage = () => {
         </button>
       </section>
 
-      <section className="card p-5">
-        <h2 className="text-xl font-black text-[var(--text-primary)]">Данные</h2>
-        <hr className="my-4 border-gray-100" />
+      {/* Данные */}
+      <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Данные</h2>
+        <hr className="my-4 border-[var(--border-soft)]" />
         <div className="flex flex-wrap gap-3">
           <button type="button" className="btn-secondary" onClick={handleExport}>
             Экспорт
           </button>
-          <button type="button" className="rounded-xl bg-red-500 px-6 py-3 font-black text-white shadow-card" onClick={handleReset}>
+          <button type="button" className="rounded-full bg-[var(--clay)] px-6 py-3 font-semibold text-white shadow-sm" onClick={handleReset}>
             Сбросить локально
           </button>
         </div>

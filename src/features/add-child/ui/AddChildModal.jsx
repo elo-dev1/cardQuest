@@ -41,29 +41,31 @@ export const AddChildModal = ({ child = null, open, onClose, onSubmit }) => {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-[9997] grid place-items-center bg-black/65 p-6 backdrop-blur-md"
+          className="fixed inset-0 z-[9997] grid place-items-center p-6 backdrop-blur-sm"
+          style={{ background: 'var(--bg-overlay)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.form
-            className="card w-full max-w-[560px] p-6"
-            initial={{ opacity: 0, y: 24 }}
+            className="w-full max-w-[560px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-6 shadow-lg"
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             onClick={(event) => event.stopPropagation()}
             onSubmit={submit}
           >
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-black text-[var(--text-primary)]">{isEditing ? 'Редактировать ребёнка' : 'Добавить ребёнка'}</h2>
-              <button type="button" className="text-2xl font-black text-gray-400" onClick={onClose}>
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">{isEditing ? 'Редактировать ребёнка' : 'Добавить ребёнка'}</h2>
+              <button type="button" className="text-2xl font-medium text-[var(--text-tertiary)]" onClick={onClose}>
                 ×
               </button>
             </div>
 
             <label className="mb-4 block">
-              <span className="mb-1 block text-sm font-black text-[var(--text-primary)]">Имя</span>
+              <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Имя</span>
               <input
                 className="input-field"
                 value={form.name}
@@ -74,14 +76,14 @@ export const AddChildModal = ({ child = null, open, onClose, onSubmit }) => {
             </label>
 
             <div className="mb-4">
-              <div className="mb-2 text-sm font-black text-[var(--text-primary)]">Аватар</div>
+              <div className="mb-2 text-sm font-medium text-[var(--text-primary)]">Аватар</div>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {AVATARS.map((avatar) => (
                   <button
                     type="button"
                     key={avatar}
                     className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg transition ${
-                      form.avatar === avatar ? 'bg-[var(--c-purple)] text-white shadow-purple' : 'bg-gray-100'
+                      form.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
                     }`}
                     onClick={() => setForm((current) => ({ ...current, avatar }))}
                   >
@@ -96,19 +98,19 @@ export const AddChildModal = ({ child = null, open, onClose, onSubmit }) => {
                 <button
                   type="button"
                   key={key}
-                  className={`rounded-xl border p-3 text-left transition ${
-                    form.heroClass === key ? 'border-[var(--c-purple)] bg-[var(--c-purple-pale)] shadow-purple' : 'border-gray-200 bg-white'
+                  className={`rounded-[var(--r-md)] border p-3 text-left transition ${
+                    form.heroClass === key ? 'border-[var(--charcoal)] bg-[var(--bg-elevated)]' : 'border-[var(--border-soft)] bg-[var(--bg-surface)]'
                   }`}
                   onClick={() => setForm((current) => ({ ...current, heroClass: key }))}
                 >
                   <div className="text-xl">{heroClass.icon}</div>
-                  <div className="text-sm font-black">{heroClass.label}</div>
+                  <div className="text-sm font-semibold">{heroClass.label}</div>
                 </button>
               ))}
             </div>
 
             <label className="mb-6 block">
-              <span className="mb-1 block text-sm font-black text-[var(--text-primary)]">PIN-код</span>
+              <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">PIN-код</span>
               <input
                 className="input-field"
                 inputMode="numeric"

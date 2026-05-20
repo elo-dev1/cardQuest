@@ -24,87 +24,93 @@ export const RightPanel = () => {
   };
 
   return (
-    <aside className="sticky top-6 h-fit w-[300px] shrink-0 rounded-[20px] border border-[var(--border)] bg-[var(--bg-sidebar)] p-5">
-      <section className="mb-5">
+    <aside className="sticky top-6 h-fit w-[300px] shrink-0">
+      {/* Guild block */}
+      <div className="mb-3 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-extrabold uppercase tracking-wide text-white/45">Гильдия</div>
-            <h2 className="truncate text-lg font-black text-white">{family?.name}</h2>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">Гильдия</div>
+            <h2 className="font-['DM_Serif_Display'] text-[17px] tracking-[-0.01em] text-[var(--text-primary)]">{family?.name}</h2>
           </div>
-          <span className="rounded-full bg-[var(--c-purple-pale)] px-3 py-1 text-xs font-black text-white">
+          <span className="badge badge-sand">
             ур. {family?.guild_level || 1}
           </span>
         </div>
         <div className="mt-3">
           <ProgressBar
-            value={(family?.guild_xp || 0) % 120}
-            height={8}
-            color="linear-gradient(90deg,#7c3aed,#a855f7)"
+            value={((family?.guild_xp || 0) % 120) / 1.2}
+            height={6}
+            variant="sage"
             label={`${familyProgress.completed}/${familyProgress.total} задач сегодня`}
           />
         </div>
-      </section>
+      </div>
 
-      <section className="mb-5">
-        <h3 className="mb-3 text-sm font-black text-white">Семья сегодня</h3>
-        <div className="space-y-3">
+      {/* Family today block */}
+      <div className="mb-3 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+        <h3 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Семья сегодня</h3>
+        <div className="space-y-2">
           {members.map((member) => {
             const progress = getMemberProgress(member.id);
             return (
-              <div key={member.id} className="grid grid-cols-[32px_1fr_auto] items-center gap-2">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-white/10">{member.avatar}</div>
-                <div>
-                  <div className="flex items-center justify-between text-xs font-bold text-white/80">
+              <div key={member.id} className="flex items-center gap-2.5">
+                <div className="grid h-7 w-7 place-items-center rounded-full bg-[var(--bg-elevated)] text-sm">{member.avatar}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between text-xs font-medium text-[var(--text-secondary)]">
                     <span>{member.name}</span>
                     <span>{progress.completed}/{progress.total}</span>
                   </div>
-                  <ProgressBar value={progress.percent} height={5} color="linear-gradient(90deg,#22c55e,#a3e635)" />
+                  <ProgressBar value={progress.percent} height={5} variant="sage" />
                 </div>
-                <span className="text-xs font-black text-white/50">{progress.percent}%</span>
               </div>
             );
           })}
         </div>
-      </section>
+      </div>
 
+      {/* Streak block */}
       {streak > 0 ? (
-        <div className="mb-5 rounded-xl bg-orange-500/10 px-4 py-3 text-sm font-black text-orange-300">
-          🔥 {streak} дней подряд!
+        <div className="mb-3 rounded-[var(--r-md)] bg-[var(--sand-bg)] px-4 py-3 text-center">
+          <span className="font-['DM_Serif_Display'] text-[18px] text-[var(--sand)]">🔥 {streak} дней</span>
         </div>
       ) : null}
 
-      <section className="mb-5 rounded-2xl bg-white/5 p-4">
+      {/* Boss block */}
+      <div className="mb-3 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border border-[var(--clay-bg)]">
         <div className="mb-2 flex items-center gap-3">
-          <div className="text-3xl">{boss.emoji}</div>
+          <div className="text-2xl">{boss.emoji}</div>
           <div>
-            <h3 className="text-sm font-black text-white">{boss.name}</h3>
-            <div className="text-xs font-bold text-white/45">
-              Слабость: {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label}
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">{boss.name}</h3>
+            <div className="text-xs font-medium text-[var(--text-tertiary)]">
+              {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label}
             </div>
           </div>
         </div>
-        <ProgressBar value={bossHpPercent} height={9} color="linear-gradient(90deg,#ef4444,#f97316)" />
-        <div className="mt-2 flex items-center justify-between text-xs font-extrabold text-white/60">
+        <ProgressBar value={bossHpPercent} height={8} variant="clay" />
+        <div className="mt-2 flex items-center justify-between text-xs font-medium text-[var(--text-secondary)]">
           <span>{boss.hp}/{boss.maxHp} HP</span>
-          <span>{boss.daysLeft} дня</span>
+          <span>{boss.daysLeft} дн.</span>
         </div>
         <button type="button" className="btn-secondary mt-3 w-full px-4 py-2 text-sm" onClick={() => navigate('/battle')}>
-          Атаковать →
+          ⚔️ К битве
         </button>
-      </section>
+      </div>
 
-      <section className="rounded-2xl bg-[var(--c-purple-pale)] p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-black text-white">Ежедневный бонус</h3>
-            <p className="text-xs font-bold text-white/50">🎁 +20 монет</p>
-          </div>
-          <div className="text-3xl">🎁</div>
-        </div>
-        <button type="button" className="btn-primary w-full px-4 py-2 text-sm" disabled={bonusClaimed} onClick={handleBonus}>
-          {bonusClaimed ? 'Забрано ✓' : 'Забрать'}
+      {/* Daily bonus block */}
+      <div className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+        <button
+          type="button"
+          className={`w-full rounded-full px-4 py-2.5 text-sm font-medium transition ${
+            bonusClaimed
+              ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-default'
+              : 'bg-[var(--charcoal)] text-white hover:bg-[#1a1816]'
+          }`}
+          disabled={bonusClaimed}
+          onClick={handleBonus}
+        >
+          {bonusClaimed ? '🎁 Уже получено' : '🎁 +20 монет'}
         </button>
-      </section>
+      </div>
     </aside>
   );
 };

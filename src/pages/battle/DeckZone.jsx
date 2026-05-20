@@ -11,11 +11,11 @@ const DeckSlot = ({ cardId, onRemove, onClick, isEmpty }) => {
       <button
         type="button"
         onClick={onClick}
-        className="slot-empty flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white/5 text-white/40 transition hover:bg-white/10"
+        className="slot-empty flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-[var(--text-tertiary)] transition hover:bg-[var(--bg-surface)]"
         style={{ aspectRatio: '5/7' }}
       >
         <span className="text-2xl">+</span>
-        <span className="mt-1 text-[10px] font-bold">Добавить</span>
+        <span className="mt-1 text-[10px] font-medium">Добавить</span>
       </button>
     );
   }
@@ -33,7 +33,7 @@ const DeckSlot = ({ cardId, onRemove, onClick, isEmpty }) => {
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
-          className="absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white opacity-0 transition group-hover:opacity-100"
+          className="absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--clay)] text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100"
         >
           ×
         </button>
@@ -43,7 +43,7 @@ const DeckSlot = ({ cardId, onRemove, onClick, isEmpty }) => {
       </div>
       {card && (
         <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10">
-          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-black text-red-500">⚔️ {Math.round(card.attack * [1, 1.1, 1.25, 1.5][stars])}</span>
+          <span className="rounded-full bg-[var(--clay-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--clay)]">⚔️ {Math.round(card.attack * [1, 1.1, 1.25, 1.5][stars])}</span>
         </div>
       )}
     </div>
@@ -70,9 +70,9 @@ export const DeckZone = ({ onOpenBuilder }) => {
   const nearHint = useMemo(() => getNearSynergyHint(deckCards.map((c) => c.card)), [deckCards]);
 
   return (
-    <div className="card p-5">
+    <div className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-black text-[var(--text-primary)]">Моя колода</h2>
+        <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Моя колода</h2>
         <button type="button" className="btn-secondary !px-4 !py-2 !text-sm" onClick={onOpenBuilder}>
           Собрать колоду
         </button>
@@ -100,12 +100,12 @@ export const DeckZone = ({ onOpenBuilder }) => {
 
       {activeSynergies.length > 0 && (
         <motion.div
-          className="synergy-active rounded-xl p-3"
+          className="synergy-active rounded-[var(--r-md)] p-3"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
         >
           {activeSynergies.map((syn) => (
-            <div key={syn.id} className="flex items-center gap-2 text-sm font-bold text-green-700">
+            <div key={syn.id} className="flex items-center gap-2 text-sm font-medium text-[var(--sage)]">
               <span>✨</span>
               <span>Синергия активна: {syn.name} — {syn.description}</span>
             </div>
@@ -114,8 +114,8 @@ export const DeckZone = ({ onOpenBuilder }) => {
       )}
 
       {nearHint && (
-        <div className="synergy-hint mt-2 rounded-xl p-3">
-          <div className="flex items-center gap-2 text-sm font-bold text-yellow-700">
+        <div className="synergy-hint mt-2 rounded-[var(--r-md)] p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-[var(--sand)]">
             <span>💡</span>
             <span>Добавь ещё {nearHint.missing} карту для синергии «{nearHint.synergy.name}»</span>
           </div>

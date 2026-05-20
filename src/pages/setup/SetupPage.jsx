@@ -113,32 +113,30 @@ export const SetupPage = () => {
   return (
     <div
       className="grid min-h-screen place-items-center p-6"
-      style={{
-        background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.3), transparent 60%), #1a1040',
-      }}
+      style={{ background: 'var(--bg-app)' }}
     >
       <motion.div
-        className="card w-full max-w-[620px] rounded-[24px] p-8 sm:p-10"
+        className="w-full max-w-[620px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-8 shadow-md border border-[var(--border-soft)] sm:p-10"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 140, damping: 18 }}
       >
-        <div className="mb-7 flex justify-center gap-2 text-xl text-[var(--c-purple)]">
+        <div className="mb-7 flex justify-center gap-2 text-xl text-[var(--text-tertiary)]">
           {[1, 2, 3, 4].map((item) => (
             <span key={item}>{item <= step ? '●' : '○'}</span>
           ))}
         </div>
 
-        {error ? <div className="mb-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</div> : null}
+        {error ? <div className="mb-5 rounded-[var(--r-md)] bg-[var(--clay-bg)] px-4 py-3 text-sm font-medium text-[var(--clay)]">{error}</div> : null}
 
         {step === 1 ? (
           <section>
-            <h1 className="gradient-text mb-2 text-center text-[32px] font-black">⚔️ Card Quest</h1>
-            <p className="mb-8 text-center text-lg font-extrabold text-[var(--text-muted)]">
+            <h1 className="font-['DM_Serif_Display'] text-center text-[32px] text-[var(--text-primary)] mb-2">⚔️ Card Quest</h1>
+            <p className="mb-8 text-center text-lg font-medium text-[var(--text-secondary)]">
               Добро пожаловать{displayName ? `, ${displayName}` : ''}! Создай своего героя
             </p>
 
-            <label className="mb-2 block text-sm font-black text-[var(--text-primary)]">Имя героя</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Имя героя</label>
             <input
               className="input-field mb-5"
               value={hero.name}
@@ -148,14 +146,14 @@ export const SetupPage = () => {
             />
 
             <div className="mb-5">
-              <div className="mb-2 text-sm font-black text-[var(--text-primary)]">Аватар</div>
+              <div className="mb-2 text-sm font-medium text-[var(--text-primary)]">Аватар</div>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {AVATARS.map((avatar) => (
                   <button
                     type="button"
                     key={avatar}
                     className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl transition ${
-                      hero.avatar === avatar ? 'bg-[var(--c-purple)] text-white shadow-purple' : 'bg-gray-100'
+                      hero.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
                     }`}
                     onClick={() => setHero((current) => ({ ...current, avatar }))}
                   >
@@ -170,16 +168,16 @@ export const SetupPage = () => {
                 <button
                   type="button"
                   key={key}
-                  className={`rounded-xl border p-3 text-left transition ${
+                  className={`rounded-[var(--r-md)] border p-3 text-left transition ${
                     hero.classId === key
-                      ? 'border-[var(--c-purple)] bg-[var(--c-purple-pale)] shadow-purple'
-                      : 'border-gray-200 bg-white hover:border-purple-200'
+                      ? 'border-[var(--charcoal)] bg-[var(--bg-elevated)]'
+                      : 'border-[var(--border-soft)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
                   }`}
                   onClick={() => setHero((current) => ({ ...current, classId: key }))}
                 >
                   <div className="text-xl">{heroClass.icon}</div>
-                  <div className="text-sm font-black">{heroClass.label}</div>
-                  <div className="text-xs font-bold text-gray-500">Бонус: {heroClass.bonus}</div>
+                  <div className="text-sm font-semibold">{heroClass.label}</div>
+                  <div className="text-xs font-medium text-[var(--text-secondary)]">Бонус: {heroClass.bonus}</div>
                 </button>
               ))}
             </div>
@@ -192,8 +190,8 @@ export const SetupPage = () => {
 
         {step === 2 ? (
           <section>
-            <h1 className="mb-2 text-2xl font-black text-[var(--text-primary)]">Как называется ваша семья?</h1>
-            <p className="mb-6 text-sm font-bold text-[var(--text-muted)]">
+            <h1 className="mb-2 text-2xl font-semibold text-[var(--text-primary)]">Как называется ваша семья?</h1>
+            <p className="mb-6 text-sm font-medium text-[var(--text-secondary)]">
               Ты будешь создателем гильдии. Остальные взрослые присоединятся по приглашению.
             </p>
             <input
@@ -204,7 +202,7 @@ export const SetupPage = () => {
               autoFocus
             />
             <div className="flex gap-3">
-              <button type="button" className="btn-ghost flex-1 !bg-gray-100 !text-gray-700" onClick={() => setStep(1)}>
+              <button type="button" className="btn-secondary flex-1" onClick={() => setStep(1)}>
                 Назад
               </button>
               <button type="button" className="btn-primary flex-1" disabled={!canContinue} onClick={() => setStep(3)}>
@@ -216,10 +214,10 @@ export const SetupPage = () => {
 
         {step === 3 ? (
           <section>
-            <h1 className="mb-1 text-2xl font-black text-[var(--text-primary)]">Есть дети?</h1>
-            <p className="mb-6 text-sm font-bold text-[var(--text-muted)]">Этот шаг необязательный. Детям не нужен отдельный аккаунт.</p>
+            <h1 className="mb-1 text-2xl font-semibold text-[var(--text-primary)]">Есть дети?</h1>
+            <p className="mb-6 text-sm font-medium text-[var(--text-secondary)]">Этот шаг необязательный. Детям не нужен отдельный аккаунт.</p>
 
-            <div className="mb-5 grid gap-3 rounded-2xl bg-gray-50 p-4">
+            <div className="mb-5 grid gap-3 rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-4">
               <input
                 className="input-field"
                 value={childDraft.name}
@@ -232,7 +230,7 @@ export const SetupPage = () => {
                     type="button"
                     key={avatar}
                     className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg transition ${
-                      childDraft.avatar === avatar ? 'bg-[var(--c-purple)] text-white shadow-purple' : 'bg-white'
+                      childDraft.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-surface)]'
                     }`}
                     onClick={() => setChildDraft((current) => ({ ...current, avatar }))}
                   >
@@ -245,13 +243,13 @@ export const SetupPage = () => {
                   <button
                     type="button"
                     key={key}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      childDraft.classId === key ? 'border-[var(--c-purple)] bg-white shadow-card' : 'border-gray-200 bg-white'
+                    className={`rounded-[var(--r-md)] border p-3 text-left transition ${
+                      childDraft.classId === key ? 'border-[var(--charcoal)] bg-[var(--bg-surface)] shadow-sm' : 'border-[var(--border-soft)] bg-[var(--bg-surface)]'
                     }`}
                     onClick={() => setChildDraft((current) => ({ ...current, classId: key }))}
                   >
                     <div className="text-xl">{heroClass.icon}</div>
-                    <div className="text-sm font-black">{heroClass.label}</div>
+                    <div className="text-sm font-semibold">{heroClass.label}</div>
                   </button>
                 ))}
               </div>
@@ -271,19 +269,19 @@ export const SetupPage = () => {
             {children.length ? (
               <div className="mb-6 space-y-2">
                 {children.map((child) => (
-                  <div key={child.id} className="flex items-center justify-between rounded-xl bg-gray-50 p-3">
+                  <div key={child.id} className="flex items-center justify-between rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{child.avatar}</span>
                       <div>
-                        <div className="font-black">{child.name}</div>
-                        <div className="text-xs font-bold text-gray-500">
+                        <div className="font-semibold">{child.name}</div>
+                        <div className="text-xs font-medium text-[var(--text-secondary)]">
                           {HERO_CLASSES[child.classId]?.icon} {HERO_CLASSES[child.classId]?.label}
                         </div>
                       </div>
                     </div>
                     <button
                       type="button"
-                      className="grid h-8 w-8 place-items-center rounded-full bg-gray-200 font-black text-gray-600"
+                      className="grid h-8 w-8 place-items-center rounded-full bg-[var(--bg-surface)] font-medium text-[var(--text-secondary)]"
                       onClick={() => setChildren((current) => current.filter((item) => item.id !== child.id))}
                     >
                       ×
@@ -294,7 +292,7 @@ export const SetupPage = () => {
             ) : null}
 
             <div className="flex gap-3">
-              <button type="button" className="btn-ghost flex-1 !bg-gray-100 !text-gray-700" onClick={() => setStep(2)}>
+              <button type="button" className="btn-secondary flex-1" onClick={() => setStep(2)}>
                 Назад
               </button>
               <button type="button" className="btn-primary flex-1" onClick={finishSetup} disabled={isSubmitting}>
@@ -307,11 +305,11 @@ export const SetupPage = () => {
         {step === 4 ? (
           <section className="text-center">
             <div className="float-soft mb-4 text-[80px]">🏰</div>
-            <h1 className="gradient-text mb-2 text-3xl font-black">{guildName} создан!</h1>
-            <p className="mb-6 text-sm font-bold text-[var(--text-muted)]">Пригласи других взрослых по коду или ссылке.</p>
+            <h1 className="font-['DM_Serif_Display'] mb-2 text-3xl text-[var(--text-primary)]">{guildName} создан!</h1>
+            <p className="mb-6 text-sm font-medium text-[var(--text-secondary)]">Пригласи других взрослых по коду или ссылке.</p>
 
-            <div className="mb-5 rounded-2xl border-2 border-dashed border-purple-200 bg-[#f8f7ff] p-5">
-              <div className="mb-3 font-mono text-[44px] font-black tracking-[0.18em] text-[var(--text-primary)]">{inviteCode}</div>
+            <div className="mb-5 rounded-[var(--r-md)] border-2 border-dashed border-[var(--border-medium)] bg-[var(--bg-elevated)] p-5">
+              <div className="mb-3 font-mono text-[44px] font-semibold tracking-[0.18em] text-[var(--text-primary)]">{inviteCode}</div>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" className="btn-secondary px-4 py-2 text-sm" onClick={copyInvite}>
                   Скопировать
@@ -322,7 +320,7 @@ export const SetupPage = () => {
               </div>
             </div>
 
-            <div className="mb-6 rounded-xl bg-gray-50 px-4 py-3 text-sm font-bold text-[var(--text-muted)]">
+            <div className="mb-6 rounded-[var(--r-md)] bg-[var(--bg-elevated)] px-4 py-3 text-sm font-medium text-[var(--text-secondary)]">
               {inviteUrl}
               <br />
               Ссылка действительна 7 дней

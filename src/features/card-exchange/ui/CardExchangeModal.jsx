@@ -89,30 +89,32 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[9995] flex items-center justify-center bg-black/65 p-3 backdrop-blur-md"
+        className="fixed inset-0 z-[9995] flex items-center justify-center p-3 backdrop-blur-sm"
+        style={{ background: 'var(--bg-overlay)' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="card w-full max-w-[600px] max-h-[90vh] overflow-y-auto p-4"
-          initial={{ opacity: 0, y: 24, scale: 0.96 }}
+          className="w-full max-w-[600px] max-h-[90vh] overflow-y-auto rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-lg"
+          initial={{ opacity: 0, y: 40, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 24, scale: 0.96 }}
+          exit={{ opacity: 0, y: 20, scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-black text-[var(--text-primary)]">Предложить обмен</h2>
-            <button type="button" className="text-2xl font-black text-gray-400" onClick={onClose}>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">Предложить обмен</h2>
+            <button type="button" className="text-2xl font-medium text-[var(--text-tertiary)]" onClick={onClose}>
               ×
             </button>
           </div>
 
           <div className="mb-4">
             <div className="mb-2 flex items-center gap-2">
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-black ${step >= 1 ? 'bg-[var(--c-purple)] text-white' : 'bg-gray-200 text-gray-400'}`}>1</span>
-              <span className={`text-sm font-bold ${step >= 1 ? 'text-[var(--text-primary)]' : 'text-gray-400'}`}>Получатель</span>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${step >= 1 ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]'}`}>1</span>
+              <span className={`text-sm font-medium ${step >= 1 ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>Получатель</span>
             </div>
 
             {step >= 1 && (
@@ -122,16 +124,16 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
                     key={member.id}
                     type="button"
                     onClick={() => { setSelectedRecipient(member); setStep(2); }}
-                    className={`flex items-center gap-2 rounded-lg border-2 p-2 transition ${
+                    className={`flex items-center gap-2 rounded-[var(--r-sm)] border-2 p-2 transition ${
                       selectedRecipient?.id === member.id
-                        ? 'border-[var(--c-purple)] bg-[var(--c-purple-pale)]'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        ? 'border-[var(--charcoal)] bg-[var(--bg-elevated)]'
+                        : 'border-[var(--border-soft)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
                     }`}
                   >
-                    <div className="grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-xl">{member.avatar}</div>
+                    <div className="grid h-8 w-8 place-items-center rounded-full bg-[var(--bg-elevated)] text-xl">{member.avatar}</div>
                     <div className="text-left">
-                      <div className="font-black text-sm text-[var(--text-primary)]">{member.name}</div>
-                      <div className="text-xs font-bold text-gray-400">{member.role === 'child' ? 'Ребёнок' : 'Взрослый'}</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">{member.name}</div>
+                      <div className="text-xs font-medium text-[var(--text-tertiary)]">{member.role === 'child' ? 'Ребёнок' : 'Взрослый'}</div>
                     </div>
                   </button>
                 ))}
@@ -141,8 +143,8 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
 
           <div className="mb-4">
             <div className="mb-2 flex items-center gap-2">
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-black ${step >= 2 ? 'bg-[var(--c-purple)] text-white' : 'bg-gray-200 text-gray-400'}`}>2</span>
-              <span className={`text-sm font-bold ${step >= 2 ? 'text-[var(--text-primary)]' : 'text-gray-400'}`}>Вы отдаёте</span>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${step >= 2 ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]'}`}>2</span>
+              <span className={`text-sm font-medium ${step >= 2 ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>Вы отдаёте</span>
             </div>
 
             {step >= 2 && (
@@ -154,7 +156,7 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
                       key={card.id}
                       type="button"
                       onClick={() => { setSelectedOfferedCard(card); setStep(3); }}
-                      className={`relative ${selectedOfferedCard?.id === card.id ? 'ring-2 ring-[var(--c-purple)] ring-offset-1' : ''}`}
+                      className={`relative ${selectedOfferedCard?.id === card.id ? 'ring-2 ring-[var(--charcoal)] ring-offset-1' : ''}`}
                     >
                       <CardView card={card} count={owned?.count} stars={owned?.stars ?? 0} size="sm" />
                     </button>
@@ -166,8 +168,8 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
 
           <div className="mb-4">
             <div className="mb-2 flex items-center gap-2">
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-black ${step >= 3 ? 'bg-[var(--c-purple)] text-white' : 'bg-gray-200 text-gray-400'}`}>3</span>
-              <span className={`text-sm font-bold ${step >= 3 ? 'text-[var(--text-primary)]' : 'text-gray-400'}`}>Вы получаете</span>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${step >= 3 ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)]'}`}>3</span>
+              <span className={`text-sm font-medium ${step >= 3 ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`}>Вы получаете</span>
             </div>
 
             {step >= 3 && selectedRecipient && (
@@ -179,7 +181,7 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
                       key={card.id}
                       type="button"
                       onClick={() => { setSelectedRequestedCard(card); }}
-                      className={`relative ${selectedRequestedCard?.id === card.id ? 'ring-2 ring-[var(--c-purple)] ring-offset-1' : ''}`}
+                      className={`relative ${selectedRequestedCard?.id === card.id ? 'ring-2 ring-[var(--charcoal)] ring-offset-1' : ''}`}
                     >
                       <CardView card={card} count={owned?.count} stars={owned?.stars ?? 0} size="sm" />
                     </button>
@@ -190,17 +192,17 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
           </div>
 
           {step >= 3 && selectedRecipient && selectedOfferedCard && selectedRequestedCard && (
-            <div className="mb-4 rounded-xl bg-gray-50 p-3">
-              <div className="text-xs font-bold text-gray-500">Обмен с {selectedRecipient.name}:</div>
+            <div className="mb-4 rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3">
+              <div className="text-xs font-medium text-[var(--text-secondary)]">Обмен с {selectedRecipient.name}:</div>
               <div className="mt-1 flex items-center justify-center gap-3">
                 <div className="text-center">
                   <div className="text-xl">{selectedOfferedCard?.emoji}</div>
-                  <div className="text-[10px] font-black text-gray-500">{selectedOfferedCard?.name}</div>
+                  <div className="text-[10px] font-medium text-[var(--text-tertiary)]">{selectedOfferedCard?.name}</div>
                 </div>
                 <div className="text-xl">↔</div>
                 <div className="text-center">
                   <div className="text-xl">{selectedRequestedCard?.emoji}</div>
-                  <div className="text-[10px] font-black text-gray-500">{selectedRequestedCard?.name}</div>
+                  <div className="text-[10px] font-medium text-[var(--text-tertiary)]">{selectedRequestedCard?.name}</div>
                 </div>
               </div>
             </div>

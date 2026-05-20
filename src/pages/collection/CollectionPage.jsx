@@ -102,7 +102,8 @@ export const CollectionPage = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Селектор участников */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         {members.map((member) => {
           const isSelected = member.id === currentCollectionMember;
@@ -114,23 +115,26 @@ export const CollectionPage = () => {
               onClick={() => setCurrentCollectionMember(member.id)}
               className={`flex items-center gap-2 shrink-0 rounded-full px-4 py-2 transition ${
                 isSelected
-                  ? 'bg-[var(--c-purple)] text-white shadow-purple'
-                  : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  ? 'bg-[var(--charcoal)] text-white'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
               <span className="text-xl">{member.avatar}</span>
-              <span className="font-bold text-sm">{member.name}</span>
-              <span className="text-xs opacity-70">({memberColl.length})</span>
+              <span className="text-sm font-medium">{member.name}</span>
+              <span className="text-xs opacity-60">({memberColl.length})</span>
             </button>
           );
         })}
       </div>
 
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-black text-white">Коллекция</h1>
-          <p className="text-sm font-bold text-white/50">{ownedCount} / {CARD_LIBRARY.length} карточек</p>
-        </div>
+      {/* Заголовок + прогресс */}
+      <header>
+        <div className="font-['DM_Serif_Display'] text-[24px] text-[var(--text-primary)]">{ownedCount} из {CARD_LIBRARY.length}</div>
+        <ProgressBar value={ownedCount / CARD_LIBRARY.length * 100} height={8} variant="sage" className="mt-2" />
+      </header>
+
+      <div className="flex items-center justify-between">
+        <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">Коллекция</h1>
         <SegmentedControl
           value={tab}
           onChange={setTab}
@@ -139,43 +143,47 @@ export const CollectionPage = () => {
             { value: 'albums', label: 'Альбомы' },
           ]}
         />
-      </header>
+      </div>
 
       {tab === 'cards' ? (
         <>
+          {/* Фильтры редкости с числами */}
           <section className="flex gap-2 overflow-x-auto pb-1">
-            {rarityOptions.map(([value, label]) => (
-              <button
-                type="button"
-                key={value}
-                onClick={() => setRarityFilter(value)}
-                className={`shrink-0 rounded-full px-4 py-2 text-sm font-black ${
-                  rarityFilter === value ? 'bg-[var(--c-purple)] text-white shadow-purple' : 'bg-white/10 text-white/60'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            {rarityOptions.map(([value, label]) => {
+              const count = value === 'all' ? CARD_LIBRARY.length : CARD_LIBRARY.filter((c) => c.rarity === value).length;
+              return (
+                <button
+                  type="button"
+                  key={value}
+                  onClick={() => setRarityFilter(value)}
+                  className={`pill shrink-0 ${rarityFilter === value ? 'active' : ''}`}
+                >
+                  {label} {count}
+                </button>
+              );
+            })}
           </section>
 
+          {/* Прогресс по редкостям */}
           <section className="grid grid-cols-2 gap-3 md:grid-cols-5">
             {progressByRarity.slice(0, 5).map((item) => {
               const rarity = RARITIES[item.rarity];
               return (
-                <div key={item.rarity} className="card p-3">
+                <div key={item.rarity} className="rounded-[var(--r-md)] bg-[var(--bg-surface)] p-3 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-xl">◆</span>
-                    <span className="text-xs font-black" style={{ color: rarity.color }}>
+                    <span className="text-xs font-semibold" style={{ color: rarity.color }}>
                       {item.owned}/{item.total}
                     </span>
                   </div>
-                  <div className="mb-2 text-xs font-black text-[var(--text-muted)]">{rarity.label}</div>
-                  <ProgressBar value={item.percent} height={5} color={rarity.color} />
+                  <div className="mb-2 text-xs font-medium text-[var(--text-secondary)]">{rarity.label}</div>
+                  <ProgressBar value={item.percent} height={5} />
                 </div>
               );
             })}
           </section>
 
+          {/* Сетка карточек */}
           <section className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
             {visibleCards.map((card) => {
               const owned = collectionMap.get(card.id);
@@ -200,56 +208,56 @@ export const CollectionPage = () => {
             const owned = CARD_LIBRARY.filter((card) => album.rarity.includes(card.rarity) && collectionMap.has(card.id)).length;
             const locked = index > 0 && owned === 0;
             return (
-              <div key={album.id} className={`card flex items-center gap-4 p-5 ${locked ? 'opacity-50' : ''}`}>
-                <div className="grid h-[60px] w-[60px] place-items-center rounded-2xl bg-[#f8f7ff] text-4xl">
+              <div key={album.id} className={`rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)] ${locked ? 'opacity-50' : ''}`}>
+                <div className="grid h-[60px] w-[60px] place-items-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-3xl">
                   {locked ? '🔒' : album.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-black text-[var(--text-primary)]">{album.title}</h2>
-                  <p className="mb-2 text-sm font-bold text-[var(--text-muted)]">Собери все и получи бонус</p>
-                  <ProgressBar value={total ? (owned / total) * 100 : 0} height={7} color="linear-gradient(90deg,#7c3aed,#f59e0b)" />
+                  <h2 className="font-semibold text-[var(--text-primary)]">{album.title}</h2>
+                  <p className="mb-2 text-[13px] font-medium text-[var(--text-secondary)]">Собери все и получи бонус</p>
+                  <ProgressBar value={total ? (owned / total) * 100 : 0} height={7} variant="sage" />
                 </div>
-                <div className="text-sm font-black text-[var(--text-muted)]">{owned}/{total}</div>
+                <div className="text-sm font-medium text-[var(--text-secondary)]">{owned}/{total}</div>
               </div>
             );
           })}
         </section>
       )}
 
+      {/* Модалка детали карты */}
       <AnimatePresence>
         {selectedCard ? (
           <motion.div
-            className="fixed inset-0 z-[9995] grid place-items-center bg-black/65 p-6 backdrop-blur-md"
+            className="fixed inset-0 z-[9995] grid place-items-center p-6 backdrop-blur-sm"
+            style={{ background: 'var(--bg-overlay)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-onClick={() => { setSelectedCard(null); setShowUpgradeModal(false); }}
+            onClick={() => { setSelectedCard(null); setShowUpgradeModal(false); }}
           >
             <motion.div
-              className="card w-full max-w-[360px] p-4"
-              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              className="relative w-full max-w-[360px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-lg"
+              initial={{ opacity: 0, y: 40, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 24, scale: 0.96 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               onClick={(event) => event.stopPropagation()}
             >
-              <button type="button" className="absolute right-3 top-3 text-2xl font-black text-gray-400" onClick={() => { setSelectedCard(null); setShowUpgradeModal(false); }}>
+              <button type="button" className="absolute right-3 top-3 text-2xl font-medium text-[var(--text-tertiary)]" onClick={() => { setSelectedCard(null); setShowUpgradeModal(false); }}>
                 ×
               </button>
               
               <div className="flex flex-col items-center">
                 <CardView card={selectedCard} count={collectionMap.get(selectedCard.id)?.count} stars={collectionMap.get(selectedCard.id)?.stars ?? 0} size="lg" />
                 
-                <h2 className="mt-3 text-xl font-black text-[var(--text-primary)]">{selectedCard.name}</h2>
+                <h2 className="mt-4 font-['DM_Serif_Display'] text-[22px] text-[var(--text-primary)]">{selectedCard.name}</h2>
                 
                 <div className="mt-2 flex gap-2">
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black text-white"
-                    style={{ background: RARITIES[selectedCard.rarity].color }}
-                  >
+                  <span className={`badge badge-${selectedCard.rarity}`}>
                     {RARITIES[selectedCard.rarity].label}
                   </span>
                   {(collectionMap.get(selectedCard.id)?.stars ?? 0) > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-black text-yellow-700">
+                    <span className="badge badge-sand">
                       {STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].label}
                     </span>
                   )}
@@ -274,28 +282,28 @@ onClick={() => { setSelectedCard(null); setShowUpgradeModal(false); }}
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-lg bg-gray-50 p-3 text-center">
-                    <div className="text-xs font-black text-gray-400">Атака</div>
-                    <div className="text-lg font-black text-[var(--text-primary)]">⚔️ {Math.round(selectedCard.attack * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)}</div>
+                  <div className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-center">
+                    <div className="text-xs font-medium text-[var(--text-tertiary)]">Атака</div>
+                    <div className="text-lg font-semibold text-[var(--text-primary)]">⚔️ {Math.round(selectedCard.attack * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)}</div>
                   </div>
-                  <div className="rounded-lg bg-gray-50 p-3 text-center">
-                    <div className="text-xs font-black text-gray-400">Защита</div>
-                    <div className="text-lg font-black text-[var(--text-primary)]">🛡️ {Math.round(selectedCard.defense * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)}</div>
+                  <div className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-center">
+                    <div className="text-xs font-medium text-[var(--text-tertiary)]">Защита</div>
+                    <div className="text-lg font-semibold text-[var(--text-primary)]">🛡️ {Math.round(selectedCard.defense * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)}</div>
                   </div>
                 </div>
 
                 <div className="mt-3 text-center">
-                  <span className="text-sm font-black text-[var(--text-purple)]">
+                  <span className="text-sm font-medium text-[var(--slate)]">
                     {CATEGORIES[selectedCard.category]?.icon} {CATEGORIES[selectedCard.category]?.label}
                   </span>
                 </div>
 
                 {selectedCard.lore && (
-                  <p className="mt-3 text-center text-sm italic text-[var(--text-muted)]">{selectedCard.lore}</p>
+                  <p className="mt-3 text-center text-sm italic text-[var(--text-secondary)]">{selectedCard.lore}</p>
                 )}
 
                 {selectedCard.ability && (
-                  <div className="mt-3 rounded-lg bg-[var(--c-purple-pale)] p-3 text-center text-xs font-black text-[var(--text-purple)]">
+                  <div className="mt-3 rounded-[var(--r-md)] bg-[var(--lavender-bg)] p-3 text-center text-xs font-medium text-[var(--lavender)]">
                     {selectedCard.ability}
                   </div>
                 )}
@@ -311,25 +319,28 @@ onClick={() => { setSelectedCard(null); setShowUpgradeModal(false); }}
         offeredCard={selectedCard}
       />
 
+      {/* Модалка апгрейда */}
       <AnimatePresence>
         {showUpgradeModal && selectedCard && getUpgradeInfo() && (
           <motion.div
-            className="fixed inset-0 z-[9996] flex items-center justify-center bg-black/65 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[9996] flex items-center justify-center p-4 backdrop-blur-sm"
+            style={{ background: 'var(--bg-overlay)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowUpgradeModal(false)}
           >
             <motion.div
-              className="card w-full max-w-[320px] p-5"
-              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              className="w-full max-w-[320px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-lg"
+              initial={{ opacity: 0, y: 40, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 24, scale: 0.96 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
-                <h2 className="text-xl font-black text-[var(--text-primary)]">Улучшение карточки</h2>
-                <p className="mt-1 text-sm font-bold text-gray-500">до ★{getUpgradeInfo().nextStars}</p>
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">Улучшение карточки</h2>
+                <p className="mt-1 text-sm font-medium text-[var(--text-secondary)]">до ★{getUpgradeInfo().nextStars}</p>
               </div>
 
               <div className="mt-4 flex justify-center">
@@ -342,33 +353,33 @@ onClick={() => { setSelectedCard(null); setShowUpgradeModal(false); }}
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-white p-3 text-center">
-                  <div className="text-xs font-bold text-gray-400">Стоимость</div>
-                  <div className={`text-lg font-black ${getUpgradeInfo().hasEnoughCoins ? 'text-[var(--text-primary)]' : 'text-red-500'}`}>
+                <div className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-center">
+                  <div className="text-xs font-medium text-[var(--text-tertiary)]">Стоимость</div>
+                  <div className={`text-lg font-semibold ${getUpgradeInfo().hasEnoughCoins ? 'text-[var(--text-primary)]' : 'text-[var(--clay)]'}`}>
                     {getUpgradeInfo().cost.costCoins} 🪙
                   </div>
-                  <div className="text-xs text-gray-500">Баланс: {getUpgradeInfo().familyCoins}</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Баланс: {getUpgradeInfo().familyCoins}</div>
                 </div>
-                <div className="rounded-lg bg-white p-3 text-center">
-                  <div className="text-xs font-bold text-gray-400">Дубликаты</div>
-                  <div className="text-lg font-black text-[var(--text-primary)]">×1</div>
-                  <div className="text-xs text-gray-500">Доступно: {(collectionMap.get(selectedCard.id)?.count ?? 0)}</div>
+                <div className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-center">
+                  <div className="text-xs font-medium text-[var(--text-tertiary)]">Дубликаты</div>
+                  <div className="text-lg font-semibold text-[var(--text-primary)]">×1</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Доступно: {(collectionMap.get(selectedCard.id)?.count ?? 0)}</div>
                 </div>
               </div>
 
-              <div className="mt-4 rounded-lg bg-gray-50 p-3">
-                <div className="text-center text-sm font-black text-gray-500 mb-2">Новые характеристики</div>
+              <div className="mt-4 rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3">
+                <div className="mb-2 text-center text-sm font-medium text-[var(--text-secondary)]">Новые характеристики</div>
                 <div className="grid grid-cols-2 gap-2 text-center">
                   <div>
-                    <div className="text-xs text-gray-400">Атака</div>
-                    <div className="font-black text-[var(--text-primary)]">
-                      {Math.round(selectedCard.attack * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)} → <span className="text-green-600">{getUpgradeInfo().newAttack}</span>
+                    <div className="text-xs text-[var(--text-tertiary)]">Атака</div>
+                    <div className="font-semibold text-[var(--text-primary)]">
+                      {Math.round(selectedCard.attack * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)} → <span className="text-[var(--sage)]">{getUpgradeInfo().newAttack}</span>
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-400">Защита</div>
-                    <div className="font-black text-[var(--text-primary)]">
-                      {Math.round(selectedCard.defense * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)} → <span className="text-green-600">{getUpgradeInfo().newDefense}</span>
+                    <div className="text-xs text-[var(--text-tertiary)]">Защита</div>
+                    <div className="font-semibold text-[var(--text-primary)]">
+                      {Math.round(selectedCard.defense * STAR_LEVELS[collectionMap.get(selectedCard.id)?.stars ?? 0].multiplier)} → <span className="text-[var(--sage)]">{getUpgradeInfo().newDefense}</span>
                     </div>
                   </div>
                 </div>

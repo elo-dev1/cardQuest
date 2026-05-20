@@ -68,25 +68,27 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9995] grid place-items-center bg-black/65 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[9995] grid place-items-center p-4 backdrop-blur-sm"
+      style={{ background: 'var(--bg-overlay)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
       <motion.div
-        className="card relative flex max-h-[90vh] w-full max-w-[680px] flex-col overflow-hidden p-6"
-        initial={{ opacity: 0, y: 24 }}
+        className="relative flex max-h-[90vh] w-full max-w-[680px] flex-col overflow-hidden rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-6 shadow-lg"
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 24 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-black text-[var(--text-primary)]">Собери колоду для битвы</h2>
-          <button type="button" className="text-2xl font-black text-gray-400" onClick={onClose}>×</button>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Собери колоду для битвы</h2>
+          <button type="button" className="text-2xl font-medium text-[var(--text-tertiary)]" onClick={onClose}>×</button>
         </div>
 
-        <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">
+        <div className="mb-4 rounded-[var(--r-md)] bg-[var(--clay-bg)] p-3 text-sm font-medium text-[var(--clay)]">
           🎯 Босс слаб к {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label} — выбирай такие карточки!
         </div>
 
@@ -102,14 +104,14 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
                     <button
                       type="button"
                       onClick={() => removeFromSlot(slotIndex)}
-                      className="absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white opacity-0 transition group-hover:opacity-100"
+                      className="absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--clay)] text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100"
                     >
                       ×
                     </button>
                     <CardView card={card} stars={item?.stars || 0} count={item?.count} size="fill" />
                   </div>
                 ) : (
-                  <div className="slot-empty flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white/5 text-white/40 transition hover:bg-white/10" style={{ aspectRatio: '5/7' }}>
+                  <div className="slot-empty flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-[var(--text-tertiary)] transition hover:bg-[var(--bg-surface)]" style={{ aspectRatio: '5/7' }}>
                     <span className="text-2xl">+</span>
                   </div>
                 )}
@@ -119,7 +121,7 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
         </div>
 
         {activeSynergies.length > 0 && (
-          <div className="mb-4 rounded-xl bg-purple-100 p-3 text-sm font-bold text-purple-700">
+          <div className="mb-4 rounded-[var(--r-md)] bg-[var(--lavender-bg)] p-3 text-sm font-medium text-[var(--lavender)]">
             {activeSynergies.map((syn) => (
               <div key={syn.id} className="flex items-center gap-2">
                 <span>✨</span>
@@ -135,11 +137,7 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
               key={cat}
               type="button"
               onClick={() => setActiveFilter(cat)}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                activeFilter === cat
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className={`pill text-xs ${activeFilter === cat ? 'active' : ''}`}
             >
               {cat === 'all' ? 'Все' : `${CATEGORIES[cat]?.icon} ${CATEGORIES[cat]?.label}`}
             </button>

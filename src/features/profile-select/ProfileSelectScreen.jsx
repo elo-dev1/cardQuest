@@ -64,19 +64,21 @@ export const ProfileSelectScreen = () => {
     <AnimatePresence>
       {visible ? (
         <motion.div
-          className="fixed inset-0 z-[9996] grid place-items-center bg-[rgba(10,5,30,0.85)] p-6 backdrop-blur-md"
+          className="fixed inset-0 z-[9996] grid place-items-center p-6 backdrop-blur-sm"
+          style={{ background: 'var(--bg-overlay)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className={`card-dark w-full max-w-[480px] p-8 ${invalid ? 'shake' : ''}`}
+            className={`w-full max-w-[480px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-8 shadow-lg border border-[var(--border-soft)] ${invalid ? 'shake' : ''}`}
             initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           >
-            <h2 className="mb-2 text-center text-2xl font-black text-white">Привет! Кто ты? 👋</h2>
-            <p className="mb-6 text-center text-sm font-bold text-white/50">
+            <h2 className="mb-2 text-center text-2xl font-semibold text-[var(--text-primary)]">Привет! Кто ты? 👋</h2>
+            <p className="mb-6 text-center text-sm font-medium text-[var(--text-secondary)]">
               Выберите героя, чтобы продолжить семейный квест.
             </p>
 
@@ -88,14 +90,14 @@ export const ProfileSelectScreen = () => {
                     <button
                       key={member.id}
                       type="button"
-                      className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center transition hover:-translate-y-1 hover:bg-white/10"
+                      className="rounded-[var(--r-md)] border border-[var(--border-soft)] bg-[var(--bg-elevated)] p-4 text-center transition hover:-translate-y-1 hover:bg-[var(--bg-surface)]"
                       onClick={() => chooseMember(member)}
                     >
-                      <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-amber-300 to-fuchsia-500 p-[3px] text-3xl">
-                        <span className="grid h-full w-full place-items-center rounded-full bg-[var(--bg-sidebar)]">{member.avatar}</span>
+                      <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[var(--sand)] to-[var(--lavender)] p-[3px] text-3xl">
+                        <span className="grid h-full w-full place-items-center rounded-full bg-[var(--bg-surface)]">{member.avatar}</span>
                       </div>
-                      <div className="font-black text-white">{member.name}</div>
-                      <div className="text-xs font-bold text-white/50">
+                      <div className="font-semibold text-[var(--text-primary)]">{member.name}</div>
+                      <div className="text-xs font-medium text-[var(--text-secondary)]">
                         {heroClass?.icon} {heroClass?.label} · ур. {member.level}
                       </div>
                     </button>
@@ -104,18 +106,18 @@ export const ProfileSelectScreen = () => {
               </div>
             ) : (
               <div>
-                <button type="button" className="mb-4 text-sm font-bold text-white/50 hover:text-white" onClick={() => setSelected(null)}>
+                <button type="button" className="mb-4 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition" onClick={() => setSelected(null)}>
                   ← Назад к героям
                 </button>
                 <div className="mb-5 text-center">
                   <div className="text-5xl">{selected.avatar}</div>
-                  <div className="mt-2 text-lg font-black text-white">{selected.name}</div>
+                  <div className="mt-2 text-lg font-semibold text-[var(--text-primary)]">{selected.name}</div>
                 </div>
                 <div className="mb-5 flex justify-center gap-2">
                   {Array.from({ length: 4 }, (_, index) => (
                     <span
                       key={index}
-                      className={`h-3 w-3 rounded-full ${index < pin.length ? 'bg-[var(--c-gold)]' : 'bg-white/15'}`}
+                      className={`h-3 w-3 rounded-full ${index < pin.length ? 'bg-[var(--sand)]' : 'bg-[var(--bg-elevated)]'}`}
                     />
                   ))}
                 </div>
@@ -124,7 +126,7 @@ export const ProfileSelectScreen = () => {
                     <button
                       key={digit}
                       type="button"
-                      className="grid h-14 place-items-center rounded-2xl bg-white/10 text-xl font-black text-white transition hover:bg-white/15"
+                      className="grid h-14 place-items-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-xl font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-surface)]"
                       onClick={() => pressDigit(digit)}
                     >
                       {digit === 'ok' ? '✓' : digit}

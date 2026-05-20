@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const CONFETTI_COLORS = [
-  '#f59e0b', '#ef4444', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#14b8a6',
+  'var(--sand)', 'var(--clay)', 'var(--sage)', 'var(--slate)', 'var(--lavender)', '#ec4899', '#f97316', '#14b8a6',
 ];
 
 const generateConfetti = (count) =>
@@ -36,7 +36,7 @@ export const VictoryScreen = ({ bossName, reward = 250, onClose }) => {
       {[...Array(6)].map((_, i) => (
         <div
           key={i}
-          className="victory-ray pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-[300px] origin-left bg-gradient-to-r from-yellow-400/50 to-transparent"
+          className="victory-ray pointer-events-none absolute left-1/2 top-1/2 h-[2px] w-[300px] origin-left bg-gradient-to-r from-[var(--sand)]/50 to-transparent"
           style={{
             transform: `rotate(${i * 30}deg)`,
             width: `${300 + i * 50}px`,
@@ -83,21 +83,21 @@ export const VictoryScreen = ({ bossName, reward = 250, onClose }) => {
         </motion.div>
 
         <motion.h1
-          className="mb-4 text-center text-5xl font-black leading-tight"
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          className="mb-4 text-center text-5xl font-['DM_Serif_Display'] leading-tight"
           style={{
-            background: 'linear-gradient(135deg, #f59e0b, #f97316, #fbbf24)',
+            background: 'linear-gradient(135deg, var(--sand), #f97316, var(--sand-light))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
         >
           ПОБЕДА!
         </motion.h1>
 
         <motion.p
-          className="mb-2 text-xl font-bold text-white/80"
+          className="mb-2 text-xl font-medium text-[var(--text-secondary)]"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
@@ -106,13 +106,13 @@ export const VictoryScreen = ({ bossName, reward = 250, onClose }) => {
         </motion.p>
 
         <motion.div
-          className="mt-4 rounded-2xl bg-yellow-400/20 px-8 py-4 text-center"
+          className="mt-4 rounded-[var(--r-lg)] bg-[var(--sand-bg)] px-8 py-4 text-center"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <p className="text-2xl font-black text-yellow-400">+{reward} монет!</p>
-          <p className="text-sm font-bold text-white/60">Награда зачислена</p>
+          <p className="text-2xl font-['DM_Serif_Display'] text-[var(--sand)]">+{reward} монет!</p>
+          <p className="text-sm font-medium text-[var(--text-secondary)]">Награда зачислена</p>
         </motion.div>
       </motion.div>
     </motion.div>
@@ -132,7 +132,7 @@ export const DefeatScreen = ({ bossName, onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-gray-500/20 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--bg-elevated)]/50 to-transparent" />
 
       <motion.div
         className="relative z-10 flex flex-col items-center px-8"
@@ -140,12 +140,12 @@ export const DefeatScreen = ({ bossName, onClose }) => {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="mb-6 text-[100px] opacity-60 grayscale">🐲</div>
+        <div className="mb-6 text-[100px] opacity-40 grayscale">🐲</div>
 
         <h1
-          className="mb-4 text-center text-4xl font-black text-gray-300"
+          className="mb-4 text-center text-4xl font-['DM_Serif_Display']"
           style={{
-            background: 'linear-gradient(135deg, #9ca3af, #6b7280)',
+            background: 'linear-gradient(135deg, var(--text-secondary), var(--text-tertiary))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}
@@ -153,13 +153,13 @@ export const DefeatScreen = ({ bossName, onClose }) => {
           {bossName} выжил...
         </h1>
 
-        <p className="mb-2 text-center text-lg font-bold text-gray-400">
+        <p className="mb-2 text-center text-lg font-medium text-[var(--text-secondary)]">
           но гильдия не сдаётся!
         </p>
 
-        <div className="mt-4 rounded-2xl bg-gray-700/50 px-8 py-4 text-center">
-          <p className="text-xl font-black text-gray-300">Новая неделя — новый шанс.</p>
-          <p className="mt-1 text-sm font-bold text-gray-500">HP босса уменьшено на 10%</p>
+        <div className="mt-4 rounded-[var(--r-lg)] bg-[var(--bg-elevated)] px-8 py-4 text-center">
+          <p className="text-xl font-semibold text-[var(--text-primary)]">Новая неделя — новый шанс.</p>
+          <p className="mt-1 text-sm font-medium text-[var(--text-secondary)]">HP босса уменьшено на 10%</p>
         </div>
 
         <button

@@ -76,14 +76,12 @@ export const ShopPage = () => {
   };
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-black text-white">Магазин гильдии</h1>
-          <p className="text-sm font-bold text-white/50">Паки, предметы и временные усиления</p>
-        </div>
-        <div className="rounded-2xl bg-white/10 px-5 py-3 text-xl font-black text-white">
-          💰 {family?.coins || 0} <span className="ml-3">💎 {family?.gems || 0}</span>
+    <div className="space-y-6">
+      <header className="text-center">
+        <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">Магазин гильдии</h1>
+        <div className="mt-2 flex justify-center gap-2">
+          <span className="pill">💰 {family?.coins || 0} монет</span>
+          <span className="pill">💎 {family?.gems || 0} кристаллов</span>
         </div>
       </header>
 
@@ -102,18 +100,18 @@ export const ShopPage = () => {
       {tab === 'packs' ? (
         <section className="grid gap-4 md:grid-cols-3">
           {PACK_TYPES.map((pack) => (
-            <div key={pack.id} className="card p-5 text-center">
+            <div key={pack.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 text-center shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
               <div
-                className="mx-auto mb-4 grid h-[100px] w-20 place-items-center rounded-2xl text-5xl shadow-card"
-                style={{ background: `linear-gradient(145deg, ${pack.color}, #f59e0b)` }}
+                className="mx-auto mb-4 grid h-[100px] w-20 place-items-center rounded-[var(--r-md)] text-5xl"
+                style={{ background: `linear-gradient(145deg, ${pack.color}, var(--sand-light))` }}
               >
                 ⭐
               </div>
-              <h2 className="text-lg font-black text-[var(--text-primary)]">{pack.emoji} {pack.name}</h2>
-              <p className="mb-4 min-h-[40px] text-sm font-bold text-[var(--text-muted)]">
+              <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">{pack.emoji} {pack.name}</h2>
+              <p className="mb-4 min-h-[40px] text-sm font-medium text-[var(--text-secondary)]">
                 {pack.cards} карты · {pack.guarantee}
               </p>
-              <div className="mb-4 text-xl font-black text-[var(--c-gold)]">💰 {pack.price_coins}</div>
+              <div className="mb-4 text-lg font-semibold text-[var(--sand)]">💰 {pack.price_coins}</div>
               <button type="button" className="btn-primary w-full px-4 py-2" onClick={() => buyPack(pack)}>
                 Купить
               </button>
@@ -128,10 +126,10 @@ export const ShopPage = () => {
             const owned = family?.ownedItems?.includes(item.id);
             const equipped = family?.equippedItems?.[item.type] === item.id;
             return (
-              <div key={item.id} className="rounded-[14px] bg-[#f8f7ff] p-4 text-center">
+              <div key={item.id} className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-4 text-center">
                 <div className="mb-3 text-5xl">{item.emoji}</div>
-                <h2 className="mb-1 text-sm font-black text-[var(--text-primary)]">{item.name}</h2>
-                <div className="mb-3 text-sm font-black text-[var(--c-gold)]">💰 {item.price}</div>
+                <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">{item.name}</h2>
+                <div className="mb-3 text-sm font-medium text-[var(--sand)]">💰 {item.price}</div>
                 <button
                   type="button"
                   className={`${owned ? 'btn-secondary' : 'btn-primary'} w-full px-3 py-2 text-xs`}
@@ -151,23 +149,23 @@ export const ShopPage = () => {
             const owned = family?.ownedEffects?.includes(effect.id);
             const active = family?.activeEffect === effect.id;
             return (
-              <div key={effect.id} className="card-dark flex items-center gap-4 p-5">
+              <div key={effect.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
                 <img
                   src={effect.icon}
                   alt={effect.name}
-                  className="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-card"
+                  className="h-14 w-14 shrink-0 rounded-[var(--r-md)] object-cover"
                 />
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-black text-white">{effect.name}</h2>
-                  <p className="text-sm font-bold text-white/50">{effect.description}</p>
+                  <h2 className="font-semibold text-[var(--text-primary)]">{effect.name}</h2>
+                  <p className="text-sm font-medium text-[var(--text-secondary)]">{effect.description}</p>
                 </div>
                 <button
                   type="button"
-                  className={`shrink-0 px-4 py-2 text-sm font-black rounded-xl transition ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
                     active
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-[var(--sage)] text-white'
                       : owned
-                        ? 'bg-white/10 text-white hover:bg-white/20'
+                        ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
                         : 'btn-primary'
                   }`}
                   onClick={() => handleBuyEffect(effect)}
@@ -186,22 +184,22 @@ export const ShopPage = () => {
             const owned = family?.ownedBackgrounds?.includes(bg.id);
             const active = family?.activeBackground === bg.id;
             return (
-              <div key={bg.id} className="card-dark flex items-center gap-4 p-5">
+              <div key={bg.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
                 <img
                   src={bg.imageMini}
                   alt={bg.name}
-                  className="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-card"
+                  className="h-14 w-14 shrink-0 rounded-[var(--r-md)] object-cover"
                 />
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-black text-white">{bg.name}</h2>
+                  <h2 className="font-semibold text-[var(--text-primary)]">{bg.name}</h2>
                 </div>
                 <button
                   type="button"
-                  className={`shrink-0 px-4 py-2 text-sm font-black rounded-xl transition ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
                     active
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-[var(--sage)] text-white'
                       : owned
-                        ? 'bg-white/10 text-white hover:bg-white/20'
+                        ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
                         : 'btn-primary'
                   }`}
                   onClick={() => handleBuyBackground(bg)}
@@ -219,21 +217,21 @@ export const ShopPage = () => {
           {BOOST_TYPES.map((boost) => {
             const active = isBoostActive(boost.id);
             return (
-              <div key={boost.id} className="card-dark flex items-center gap-4 p-5">
+              <div key={boost.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
                 <img
                   src={boost.icon}
                   alt={boost.name}
-                  className="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-card"
+                  className="h-14 w-14 shrink-0 rounded-[var(--r-md)] object-cover"
                 />
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-black text-white">{boost.name}</h2>
-                  <p className="text-sm font-bold text-white/50">Длительность: {boost.duration}</p>
+                  <h2 className="font-semibold text-[var(--text-primary)]">{boost.name}</h2>
+                  <p className="text-sm font-medium text-[var(--text-secondary)]">Длительность: {boost.duration}</p>
                 </div>
                 <button
                   type="button"
-                  className={`shrink-0 px-4 py-2 text-sm font-black rounded-xl transition ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
                     active
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-[var(--sage)] text-white'
                       : 'btn-primary'
                   }`}
                   onClick={() => handleBuyBoost(boost)}

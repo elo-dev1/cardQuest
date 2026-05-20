@@ -85,21 +85,21 @@ export const JoinPage = () => {
   return (
     <main
       className="grid min-h-screen place-items-center p-6"
-      style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25), transparent 60%), #1a1040' }}
+      style={{ background: 'var(--bg-app)' }}
     >
-      <section className="w-full max-w-[520px] rounded-[24px] bg-white p-8 shadow-card sm:p-10">
+      <section className="w-full max-w-[520px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-8 shadow-md border border-[var(--border-soft)] sm:p-10">
         {isChecking || authLoading ? (
           <div className="py-14 text-center">
             <div className="mb-4 text-5xl">🏰</div>
-            <h1 className="gradient-text text-3xl font-black">Проверяем приглашение</h1>
+            <h1 className="font-['DM_Serif_Display'] text-3xl text-[var(--text-primary)]">Проверяем приглашение</h1>
           </div>
         ) : null}
 
         {!isChecking && error && !invite ? (
           <div className="py-10 text-center">
             <div className="mb-4 text-6xl">⛔</div>
-            <h1 className="mb-2 text-2xl font-black text-[var(--text-primary)]">Приглашение не найдено</h1>
-            <p className="mb-6 text-sm font-bold text-[var(--text-muted)]">{error}</p>
+            <h1 className="mb-2 text-2xl font-semibold text-[var(--text-primary)]">Приглашение не найдено</h1>
+            <p className="mb-6 text-sm font-medium text-[var(--text-secondary)]">{error}</p>
             <Link to="/" className="btn-secondary inline-block">
               На главную
             </Link>
@@ -109,9 +109,9 @@ export const JoinPage = () => {
         {!isChecking && invite && !userId ? (
           <div className="text-center">
             <div className="mb-4 text-6xl">🏰</div>
-            <h1 className="gradient-text mb-2 text-3xl font-black">Вас приглашают в гильдию</h1>
-            <p className="mb-6 text-xl font-black text-[var(--text-primary)]">"{invite.familyName}"</p>
-            <p className="mb-6 text-sm font-bold text-[var(--text-muted)]">Чтобы принять приглашение, войди или создай аккаунт.</p>
+            <h1 className="font-['DM_Serif_Display'] mb-2 text-3xl text-[var(--text-primary)]">Вас приглашают в гильдию</h1>
+            <p className="mb-6 text-xl font-semibold text-[var(--text-primary)]">"{invite.familyName}"</p>
+            <p className="mb-6 text-sm font-medium text-[var(--text-secondary)]">Чтобы принять приглашение, войди или создай аккаунт.</p>
             <div className="grid grid-cols-2 gap-3">
               <Link to={`/auth?redirect=/join/${code}`} className="btn-secondary text-center">
                 Войти
@@ -125,13 +125,13 @@ export const JoinPage = () => {
 
         {!isChecking && invite && userId && !success ? (
           <div>
-            <h1 className="gradient-text mb-2 text-center text-3xl font-black">Ты вступаешь в "{invite.familyName}"</h1>
-            <p className="mb-6 text-center text-sm font-bold text-[var(--text-muted)]">Создай своего героя для этой гильдии.</p>
+            <h1 className="font-['DM_Serif_Display'] mb-2 text-center text-3xl text-[var(--text-primary)]">Ты вступаешь в "{invite.familyName}"</h1>
+            <p className="mb-6 text-center text-sm font-medium text-[var(--text-secondary)]">Создай своего героя для этой гильдии.</p>
 
-            {error ? <div className="mb-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</div> : null}
+            {error ? <div className="mb-5 rounded-[var(--r-md)] bg-[var(--clay-bg)] px-4 py-3 text-sm font-medium text-[var(--clay)]">{error}</div> : null}
 
             <label className="mb-5 block">
-              <span className="mb-1 block text-sm font-black text-[var(--text-primary)]">Имя героя</span>
+              <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Имя героя</span>
               <input
                 className="input-field"
                 value={profile.name}
@@ -141,14 +141,14 @@ export const JoinPage = () => {
             </label>
 
             <div className="mb-5">
-              <div className="mb-2 text-sm font-black text-[var(--text-primary)]">Аватар</div>
+              <div className="mb-2 text-sm font-medium text-[var(--text-primary)]">Аватар</div>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {AVATARS.map((avatar) => (
                   <button
                     key={avatar}
                     type="button"
                     className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl transition ${
-                      profile.avatar === avatar ? 'bg-[var(--c-purple)] text-white shadow-purple' : 'bg-gray-100'
+                      profile.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
                     }`}
                     onClick={() => setProfile((current) => ({ ...current, avatar }))}
                   >
@@ -163,15 +163,15 @@ export const JoinPage = () => {
                 <button
                   type="button"
                   key={key}
-                  className={`rounded-xl border p-3 text-left transition ${
+                  className={`rounded-[var(--r-md)] border p-3 text-left transition ${
                     profile.heroClass === key
-                      ? 'border-[var(--c-purple)] bg-[var(--c-purple-pale)] shadow-purple'
-                      : 'border-gray-200 bg-white hover:border-purple-200'
+                      ? 'border-[var(--charcoal)] bg-[var(--bg-elevated)]'
+                      : 'border-[var(--border-soft)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
                   }`}
                   onClick={() => setProfile((current) => ({ ...current, heroClass: key }))}
                 >
                   <div className="text-xl">{heroClass.icon}</div>
-                  <div className="text-sm font-black">{heroClass.label}</div>
+                  <div className="text-sm font-semibold">{heroClass.label}</div>
                 </button>
               ))}
             </div>
@@ -185,8 +185,8 @@ export const JoinPage = () => {
         {success ? (
           <div className="py-10 text-center">
             <div className="mb-4 text-6xl">🎉</div>
-            <h1 className="gradient-text mb-2 text-3xl font-black">Добро пожаловать!</h1>
-            <p className="mb-6 text-sm font-bold text-[var(--text-muted)]">Ты теперь часть "{invite.familyName}".</p>
+            <h1 className="font-['DM_Serif_Display'] mb-2 text-3xl text-[var(--text-primary)]">Добро пожаловать!</h1>
+            <p className="mb-6 text-sm font-medium text-[var(--text-secondary)]">Ты теперь часть "{invite.familyName}".</p>
             <button type="button" className="btn-primary w-full" onClick={() => navigate('/home', { replace: true })}>
               Начать приключение →
             </button>

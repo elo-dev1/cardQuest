@@ -8,7 +8,7 @@ export const ThemeToggle = () => {
     <button
       type="button"
       aria-label="Переключить тему"
-      className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/10 text-xl text-white transition hover:bg-white/15"
+      className="grid h-10 w-10 place-items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-elevated)] text-xl transition hover:bg-[var(--bg-surface)]"
       onClick={toggleTheme}
       title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
     >
