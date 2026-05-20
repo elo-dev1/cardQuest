@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { CATEGORIES } from '@/shared/data/taskTemplates';
 import { HERO_CLASSES } from '@/shared/data/memberData';
 import { useStore } from '@/shared/store/useStore';
@@ -50,8 +51,25 @@ export const TasksPage = () => {
 
   return (
     <div className="space-y-5">
-      {/* Аватары участников */}
-      <header className="flex gap-3 overflow-x-auto pb-1">
+      {/* Аватары участников — мобильный скролл */}
+      <header className="member-scroll md:hidden">
+        {members.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => chooseMember(item.id)}
+            className={`member-avatar-btn ${item.id === member?.id ? 'active' : 'opacity-50'}`}
+          >
+            <div className="member-avatar-circle">
+              {item.avatar}
+            </div>
+            <span className="member-avatar-name">{item.name.split(' ')[0]}</span>
+          </button>
+        ))}
+      </header>
+
+      {/* Десктопная версия аватаров */}
+      <header className="hidden md:flex gap-3 overflow-x-auto pb-1">
         {members.map((item) => (
           <button
             key={item.id}
@@ -105,12 +123,12 @@ export const TasksPage = () => {
         </button>
       )}
 
-      {/* Фильтры категорий */}
+      {/* Фильтры категорий — мобильный скролл pill */}
       <section className="flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => setCategory('all')}
-          className={`pill shrink-0 ${category === 'all' ? 'active' : ''}`}
+          className={`pill shrink-0 min-h-[44px] ${category === 'all' ? 'active' : ''}`}
         >
           Все
         </button>
@@ -121,33 +139,37 @@ export const TasksPage = () => {
               key={key}
               type="button"
               onClick={() => setCategory(key)}
-              className={`pill shrink-0 ${category === key ? 'active' : ''}`}
+              className={`pill shrink-0 min-h-[44px] ${category === key ? 'active' : ''}`}
             >
               {item.icon} {item.label}
             </button>
           ))}
       </section>
 
-      {/* Задачи */}
-      <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {undone.map((task, index) => (
-          <TaskItem key={task.id} task={task} memberId={member.id} index={index} isInteractive={isOwnProfile} />
-        ))}
+      {/* Задачи — полная ширина на мобайле, 2 колонки на десктопе */}
+      <section className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-3">
+        <AnimatePresence mode="popLayout">
+          {undone.map((task, index) => (
+            <TaskItem key={task.id} task={task} memberId={member.id} index={index} isInteractive={isOwnProfile} />
+          ))}
+        </AnimatePresence>
       </section>
 
       {/* Разделитель */}
       {done.length ? (
         <div className="flex items-center gap-3 text-[13px] font-medium text-[var(--text-tertiary)]">
           <span className="h-px flex-1 bg-[var(--border-soft)]" />
-          Осталось ({done.length})
+          Выполнено ({done.length})
           <span className="h-px flex-1 bg-[var(--border-soft)]" />
         </div>
       ) : null}
 
-      <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {done.map((task, index) => (
-          <TaskItem key={task.id} task={task} memberId={member.id} index={index} isInteractive={isOwnProfile} />
-        ))}
+      <section className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-3">
+        <AnimatePresence mode="popLayout">
+          {done.map((task, index) => (
+            <TaskItem key={task.id} task={task} memberId={member.id} index={index} isInteractive={isOwnProfile} />
+          ))}
+        </AnimatePresence>
       </section>
 
       <AddTaskModal open={showAddModal} onClose={() => setShowAddModal(false)} />

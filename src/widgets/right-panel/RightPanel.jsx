@@ -100,10 +100,10 @@ export const RightPanel = () => {
       <div className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
         <button
           type="button"
-          className={`w-full rounded-full px-4 py-2.5 text-sm font-medium transition ${
+          className={`w-full rounded-full px-4 py-2.5 text-sm font-medium daily-bonus-btn transition ${
             bonusClaimed
               ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-default'
-              : 'bg-[var(--charcoal)] text-white hover:bg-[#1a1816]'
+              : 'bg-[var(--charcoal)] text-white'
           }`}
           disabled={bonusClaimed}
           onClick={handleBonus}

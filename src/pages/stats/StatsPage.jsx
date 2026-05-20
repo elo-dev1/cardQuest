@@ -46,9 +46,9 @@ export const StatsPage = () => {
       </header>
 
       {/* Стрик — hero-секция */}
-      <section className="rounded-[var(--r-lg)] bg-[var(--sand-bg)] p-8 text-center">
+      <section className="rounded-[var(--r-lg)] bg-[var(--sand-bg)] p-6 md:p-8 text-center">
         <div className="text-5xl mb-2">🔥</div>
-        <div className="font-['DM_Serif_Display'] text-[64px] leading-none text-[var(--sand)]">{getStreak()}</div>
+        <div className="font-['DM_Serif_Display'] text-[48px] md:text-[64px] leading-none text-[var(--sand)]">{getStreak()}</div>
         <div className="mt-1 text-sm font-medium text-[var(--text-secondary)]">дней подряд</div>
       </section>
 
@@ -70,16 +70,16 @@ export const StatsPage = () => {
       {/* График 7 дней */}
       <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-6 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
         <h2 className="mb-5 text-[15px] font-semibold text-[var(--text-primary)]">Активность за 7 дней</h2>
-        <div className="flex h-[160px] items-end justify-between gap-3">
+        <div className="chart-container-mobile">
           {days.map((date, index) => {
             const progress = getFamilyProgress(date);
             const isToday = index === days.length - 1;
             const barHeight = Math.max(4, (progress.percent / 100) * 120);
             const bgColor = isToday ? 'var(--charcoal)' : progress.percent >= 70 ? 'var(--sage-bg)' : progress.percent >= 35 ? 'var(--sand-bg)' : 'var(--clay-bg)';
             return (
-              <div key={date} className="group flex flex-1 flex-col items-center justify-end gap-2">
+              <div key={date} className="chart-bar-wrapper-mobile group">
                 <div className="relative w-full rounded-t-xl transition group-hover:brightness-95" style={{ height: `${barHeight}px`, background: bgColor }}>
-                  <div className="pointer-events-none absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded-lg bg-[var(--charcoal)] px-2 py-1 text-xs font-medium text-white group-hover:block">
+                  <div className="pointer-events-none absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded-lg bg-[var(--charcoal)] px-2 py-1 text-xs font-medium text-white stats-tooltip group-hover:block">
                     {progress.percent}%
                   </div>
                 </div>

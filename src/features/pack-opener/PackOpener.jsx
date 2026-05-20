@@ -92,7 +92,7 @@ export const PackOpener = () => {
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className={`fixed inset-0 z-[9999] grid place-items-center overflow-hidden p-6 ${
+          className={`pack-opener-mobile fixed inset-0 z-[9999] grid place-items-center overflow-hidden p-6 md:grid md:place-items-center md:p-6 ${
             results.some((item) => item.card.rarity === 'legendary') ? '' : ''
           }`}
           style={{
@@ -150,11 +150,11 @@ export const PackOpener = () => {
 
           {step === 'reveal' || step === 'summary' ? (
             <div className="relative z-10 w-full max-w-[760px] text-center">
-              <div className="mb-8 flex flex-wrap justify-center gap-5">
+              <div className="mb-8 flex flex-col md:flex-row md:flex-wrap justify-center gap-5">
                 {cards.map((card, index) => (
                   <div
                     key={`${card.id}-${index}`}
-                    className="pack-card-3d h-[168px] w-[120px]"
+                    className="pack-card-3d h-[168px] w-full md:w-[120px]"
                     style={{ transform: step === 'reveal' ? `rotate(${(index - (cards.length - 1) / 2) * 8}deg)` : 'none' }}
                   >
                     <div className={`pack-card-inner relative h-full w-full ${revealed > index || step === 'summary' ? 'is-flipped' : ''}`}>

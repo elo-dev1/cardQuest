@@ -16,10 +16,10 @@ export const BattleLog = () => {
   const logs = boss.logs || [];
   return (
     <div className="max-h-[260px] overflow-y-auto rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)] scrollbar-soft">
-      <h2 className="mb-3 text-[15px] font-semibold text-[var(--text-primary)]">Журнал битвы</h2>
+      <h2 className="mb-3 text-[16px] font-semibold text-[var(--text-primary)]">Журнал битвы</h2>
       <div className="space-y-2">
         {(!logs || logs.length === 0) ? (
-          <p className="text-center text-sm font-medium text-[var(--text-tertiary)]">Ещё нет событий. Выполняй задачи!</p>
+          <p className="text-center text-[14px] font-medium text-[var(--text-tertiary)]">Ещё нет событий. Выполняй задачи!</p>
         ) : (
           logs.slice(0, 20).map((log) => {
             const style = LOG_TYPE_STYLES[log.type] || LOG_TYPE_STYLES.info;
@@ -28,7 +28,7 @@ export const BattleLog = () => {
                 key={log.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`rounded-[var(--r-md)] px-4 py-3 text-sm font-medium ${style.color} ${style.bg}`}
+                className={`rounded-[var(--r-md)] px-4 py-3.5 text-[14px] font-medium ${style.color} ${style.bg}`}
               >
                 <span className="mr-2">{style.icon}</span>
                 {log.text}

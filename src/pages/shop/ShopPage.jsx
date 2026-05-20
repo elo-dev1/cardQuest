@@ -98,9 +98,9 @@ export const ShopPage = () => {
       />
 
       {tab === 'packs' ? (
-        <section className="grid gap-4 md:grid-cols-3">
+        <div className="packs-scroll md:grid md:grid-cols-3 md:gap-4">
           {PACK_TYPES.map((pack) => (
-            <div key={pack.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 text-center shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+            <div key={pack.id} className="pack-card-scroll rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 text-center shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
               <div
                 className="mx-auto mb-4 grid h-[100px] w-20 place-items-center rounded-[var(--r-md)] text-5xl"
                 style={{ background: `linear-gradient(145deg, ${pack.color}, var(--sand-light))` }}
@@ -117,7 +117,7 @@ export const ShopPage = () => {
               </button>
             </div>
           ))}
-        </section>
+        </div>
       ) : null}
 
       {tab === 'items' ? (

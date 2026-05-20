@@ -64,14 +64,14 @@ export const ProfileSelectScreen = () => {
     <AnimatePresence>
       {visible ? (
         <motion.div
-          className="fixed inset-0 z-[9996] grid place-items-center p-6 backdrop-blur-sm"
+          className="profile-select-mobile fixed inset-0 z-[9996] grid place-items-center p-6 backdrop-blur-sm md:grid md:place-items-center md:p-6"
           style={{ background: 'var(--bg-overlay)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <motion.div
-            className={`w-full max-w-[480px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-8 shadow-lg border border-[var(--border-soft)] ${invalid ? 'shake' : ''}`}
+            <motion.div
+              className={`w-full max-w-[480px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-6 md:p-8 shadow-lg border border-[var(--border-soft)] ${invalid ? 'shake' : ''}`}
             initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
@@ -83,14 +83,14 @@ export const ProfileSelectScreen = () => {
             </p>
 
             {!selected ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="profile-grid-mobile grid grid-cols-2 gap-3">
                 {selectableMembers.map((member) => {
                   const heroClass = HERO_CLASSES[member.classId ?? member.hero_class];
                   return (
                     <button
                       key={member.id}
                       type="button"
-                      className="rounded-[var(--r-md)] border border-[var(--border-soft)] bg-[var(--bg-elevated)] p-4 text-center transition hover:-translate-y-1 hover:bg-[var(--bg-surface)]"
+                      className="profile-card-mobile rounded-[var(--r-md)] border border-[var(--border-soft)] bg-[var(--bg-elevated)] p-4 text-center transition hover:-translate-y-1 hover:bg-[var(--bg-surface)]"
                       onClick={() => chooseMember(member)}
                     >
                       <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[var(--sand)] to-[var(--lavender)] p-[3px] text-3xl">
@@ -121,12 +121,12 @@ export const ProfileSelectScreen = () => {
                     />
                   ))}
                 </div>
-                <div className="mx-auto grid max-w-[260px] grid-cols-3 gap-3">
+                <div className="numpad-mobile mx-auto grid max-w-[260px] grid-cols-3 gap-3">
                   {digits.map((digit) => (
                     <button
                       key={digit}
                       type="button"
-                      className="grid h-14 place-items-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-xl font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-surface)]"
+                      className="numpad-btn-mobile grid h-14 place-items-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-xl font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-surface)]"
                       onClick={() => pressDigit(digit)}
                     >
                       {digit === 'ok' ? '✓' : digit}

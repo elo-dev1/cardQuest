@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { HERO_CLASSES } from '@/shared/data/memberData';
 import { useStore } from '@/shared/store/useStore';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
@@ -9,6 +10,7 @@ export const FamilyPage = () => {
   const getMemberProgress = useStore((state) => state.getMemberProgress);
   const addToast = useStore((state) => state.addToast);
   const activeBg = BACKGROUND_TYPES.find((bg) => bg.id === family?.activeBackground);
+  const [expandedMemberId, setExpandedMemberId] = useState(null);
 
   const podium = members.slice().sort((a, b) => b.xp - a.xp);
   const [second, first, third] = [podium[1], podium[0], podium[2]];
@@ -38,7 +40,7 @@ export const FamilyPage = () => {
             : { background: 'linear-gradient(to bottom, var(--bg-surface), var(--sand-bg))' }
         }
       >
-        <div className="flex items-end justify-center gap-8">
+        <div className="podium-mobile flex items-end justify-center gap-8">
           {podiumItems.map(({ member, medal, avatar, y }) => (
             <div key={member.id} className={`text-center ${y}`}>
               <div className={`${avatar} mx-auto grid place-items-center rounded-full bg-gradient-to-br from-[var(--sand)] to-[var(--lavender)] p-[3px]`}>
@@ -64,8 +66,13 @@ export const FamilyPage = () => {
         {members.map((member) => {
           const heroClass = HERO_CLASSES[member.classId];
           const progress = getMemberProgress(member.id);
+          const isExpanded = expandedMemberId === member.id;
           return (
-            <div key={member.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex flex-wrap items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
+            <div
+              key={member.id}
+              className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex flex-wrap items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)] cursor-pointer md:cursor-default"
+              onClick={() => setExpandedMemberId(isExpanded ? null : member.id)}
+            >
               <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--bg-elevated)] text-2xl">{member.avatar}</div>
               <div className="min-w-[160px] flex-1">
                 <h3 className="font-semibold text-[var(--text-primary)]">{member.name}</h3>
@@ -77,7 +84,10 @@ export const FamilyPage = () => {
                 <div className="mb-1 text-xs font-medium text-[var(--text-secondary)]">{member.xp} XP</div>
                 <ProgressBar value={(member.xp % 120) / 1.2} height={6} variant="sage" />
               </div>
-              <div className="text-sm font-medium text-[var(--text-secondary)]">Сегодня: {progress.completed}/{progress.total}</div>
+              <div className={`member-card-details w-full ${isExpanded ? 'open' : ''}`}>
+                <div className="pt-3 text-sm font-medium text-[var(--text-secondary)]">Сегодня: {progress.completed}/{progress.total}</div>
+              </div>
+              <div className="text-sm font-medium text-[var(--text-secondary)] md:block hidden">Сегодня: {progress.completed}/{progress.total}</div>
               <button type="button" className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-elevated)] text-xl font-medium text-[var(--text-tertiary)]">
                 ⋮
               </button>

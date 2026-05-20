@@ -51,7 +51,7 @@ export const AddTaskModal = ({ open, onClose }) => {
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-[9997] grid place-items-center p-6 backdrop-blur-sm"
+          className="fixed inset-0 z-[9997] grid place-items-center p-6 backdrop-blur-sm md:grid md:place-items-center md:p-6"
           style={{ background: 'var(--bg-overlay)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -59,7 +59,7 @@ export const AddTaskModal = ({ open, onClose }) => {
           onClick={onClose}
         >
           <motion.form
-            className="w-full max-w-[560px] rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-6 shadow-lg"
+            className="w-full max-w-[560px] rounded-t-[var(--r-xl)] md:rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-6 shadow-lg md:rounded-[var(--r-lg)] bottom-sheet md:relative md:inset-auto md:w-full"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
@@ -67,6 +67,8 @@ export const AddTaskModal = ({ open, onClose }) => {
             onClick={(e) => e.stopPropagation()}
             onSubmit={handleSubmit}
           >
+            {/* Mobile handle */}
+            <div className="bottom-sheet-handle md:hidden" />
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-[var(--text-primary)]">Новая задача</h2>
               <button type="button" className="text-2xl font-medium text-[var(--text-tertiary)]" onClick={onClose}>

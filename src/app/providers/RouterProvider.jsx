@@ -16,14 +16,20 @@ import { useAuth } from '@/features/auth/model/useAuth';
 import { useStore } from '@/shared/store/useStore';
 
 const SplashScreen = () => (
-  <div
-    className="grid min-h-screen place-items-center p-6 text-center text-white"
-    style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25), transparent 60%), #1a1040' }}
-  >
-    <div>
-      <div className="float-soft mb-4 text-6xl">⚔️</div>
-      <div className="gradient-text text-3xl font-black">Card Quest</div>
-      <div className="mt-2 text-sm font-bold text-white/50">Загружаем гильдию...</div>
+  <div className="splash-screen grid min-h-screen place-items-center p-6 text-center">
+    <div className="flex flex-col items-center gap-8">
+      <div className="splash-card">
+        <div className="splash-icon float-soft">⚔️</div>
+      </div>
+      <div>
+        <h1 className="splash-title text-3xl font-black">Card Quest</h1>
+        <p className="splash-subtext mt-2 text-sm font-bold">Загружаем гильдию...</p>
+      </div>
+      <div className="splash-dots">
+        <span className="splash-dot" />
+        <span className="splash-dot" />
+        <span className="splash-dot" />
+      </div>
     </div>
   </div>
 );

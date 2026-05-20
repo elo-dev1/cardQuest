@@ -39,7 +39,7 @@ export const ToastContainer = () => {
   const toasts = useStore((state) => state.toasts);
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9998] flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2">
+    <div className="toast-container-mobile fixed bottom-6 right-6 z-[9998] flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2 md:flex md:bottom-6 md:right-6">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -47,7 +47,7 @@ export const ToastContainer = () => {
             initial={{ opacity: 0, x: 16, scale: 0.98 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 16, scale: 0.98 }}
-            className={`rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 text-sm font-medium text-[var(--text-primary)] shadow-md ${
+            className={`toast-mobile rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 text-sm font-medium text-[var(--text-primary)] shadow-md md:p-4 ${
               toastStyles[toast.type] || toastStyles.info
             }`}
           >

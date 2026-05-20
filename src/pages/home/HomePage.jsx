@@ -44,29 +44,38 @@ export const HomePage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Приветствие */}
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-['DM_Serif_Display'] text-[28px] tracking-[-0.02em] text-[var(--text-primary)]">
-            Привет, {member?.name || 'герой'} 👋
-          </h1>
-          <p className="mt-1 text-[13px] font-medium text-[var(--text-secondary)]">
-            {format(new Date(), 'EEEE, d MMMM', { locale: ru })}
-          </p>
+      {/* Приветствие — мобильная версия: только дата */}
+      <header className="hidden md:block">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-['DM_Serif_Display'] text-[28px] tracking-[-0.02em] text-[var(--text-primary)]">
+              Привет, {member?.name || 'герой'} 👋
+            </h1>
+            <p className="mt-1 text-[13px] font-medium text-[var(--text-secondary)]">
+              {format(new Date(), 'EEEE, d MMMM', { locale: ru })}
+            </p>
+          </div>
         </div>
       </header>
 
-      {/* Стат-плитки */}
-      <section className="grid grid-cols-3 gap-[10px]">
+      {/* Мобильная дата — только на мобайле */}
+      <div className="block md:hidden h-8 flex items-center">
+        <span className="text-xs font-medium text-[var(--text-tertiary)]">
+          {format(new Date(), 'EEEE, d MMMM', { locale: ru })}
+        </span>
+      </div>
+
+      {/* Стат-плитки — мобильная версия */}
+      <section className="stat-tiles-mobile md:grid md:grid-cols-3 md:gap-[10px]">
         {[
           { value: `${progress.completed}/${progress.total}`, label: 'задач', icon: '✅' },
           { value: `+${todayRewards.xp}`, label: 'XP', icon: '⭐' },
           { value: `+${todayRewards.coins}`, label: 'монет', icon: '💰' },
         ].map((item) => (
-          <div key={item.label} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 text-center shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
-            <div className="text-2xl mb-1">{item.icon}</div>
-            <div className="font-['DM_Serif_Display'] text-[28px] leading-none text-[var(--text-primary)]">{item.value}</div>
-            <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{item.label}</div>
+          <div key={item.label} className="stat-tile-mobile md:rounded-[var(--r-lg)] md:bg-[var(--bg-surface)] md:p-4 md:text-center md:shadow-[var(--shadow-card)] md:border md:border-[var(--border-soft)]">
+            <div className="text-2xl mb-1 hidden md:block">{item.icon}</div>
+            <div className="stat-tile-number md:font-['DM_Serif_Display'] md:text-[28px] md:leading-none md:text-[var(--text-primary)]">{item.value}</div>
+            <div className="stat-tile-label md:mt-1 md:text-[11px] md:font-medium md:uppercase md:tracking-wide md:text-[var(--text-tertiary)]">{item.label}</div>
           </div>
         ))}
       </section>
@@ -80,7 +89,7 @@ export const HomePage = () => {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="grid h-[64px] w-[64px] shrink-0 place-items-center rounded-[var(--r-md)] bg-[var(--sand-bg)] text-4xl">🎁</div>
+          <div className="grid h-[48px] w-[48px] md:h-[64px] md:w-[64px] shrink-0 place-items-center rounded-[var(--r-md)] bg-[var(--sand-bg)] text-3xl md:text-4xl">🎁</div>
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold text-[var(--text-primary)]">До следующего пака</h2>
             <div className="mt-2">
@@ -89,7 +98,7 @@ export const HomePage = () => {
           </div>
           <button
             type="button"
-            className="btn-primary shrink-0 px-6 py-2.5 text-sm"
+            className="btn-primary shrink-0 px-4 md:px-6 py-2.5 text-sm"
             onClick={openPack}
           >
             Открыть
@@ -97,7 +106,7 @@ export const HomePage = () => {
         </motion.section>
       ) : null}
 
-      {/* Последние карточки */}
+      {/* Последние карточки — горизонтальный скролл на мобайле */}
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Коллекция</h2>
@@ -105,9 +114,11 @@ export const HomePage = () => {
             Все →
           </Link>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-2 md:overflow-x-visible md:pb-0" style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}>
           {lastCards.map((item) => (
-            <CardView key={item.card.id} card={item.card} count={item.count} isNew={item.isNew} />
+            <div key={item.card.id} className="shrink-0" style={{ scrollSnapAlign: 'start', width: '80px' }}>
+              <CardView card={item.card} count={item.count} isNew={item.isNew} />
+            </div>
           ))}
         </div>
       </section>

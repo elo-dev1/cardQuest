@@ -62,9 +62,9 @@ export const Sidebar = () => {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-2.5 rounded-[var(--r-md)] px-3 py-2.5 text-sm font-medium transition ${
+              `flex items-center gap-2.5 rounded-[var(--r-md)] px-3 py-2.5 text-sm font-medium transition nav-item ${
                 isActive
-                  ? 'bg-[var(--charcoal)] text-white font-semibold'
+                  ? 'nav-active bg-[var(--charcoal)] text-white font-semibold'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
               }`
             }

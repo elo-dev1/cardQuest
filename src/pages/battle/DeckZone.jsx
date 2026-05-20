@@ -14,8 +14,8 @@ const DeckSlot = ({ cardId, onRemove, onClick, isEmpty }) => {
         className="slot-empty flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-[var(--text-tertiary)] transition hover:bg-[var(--bg-surface)]"
         style={{ aspectRatio: '5/7' }}
       >
-        <span className="text-2xl">+</span>
-        <span className="mt-1 text-[10px] font-medium">Добавить</span>
+        <span className="text-3xl">+</span>
+        <span className="mt-1 text-[12px] font-semibold">Добавить</span>
       </button>
     );
   }
@@ -73,12 +73,16 @@ export const DeckZone = ({ onOpenBuilder }) => {
     <div className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Моя колода</h2>
-        <button type="button" className="btn-secondary !px-4 !py-2 !text-sm" onClick={onOpenBuilder}>
-          Собрать колоду
-        </button>
+      <button
+        type="button"
+        className="btn-secondary !px-4 !py-2 !text-sm min-h-[44px]"
+        onClick={onOpenBuilder}
+      >
+        Собрать колоду
+      </button>
       </div>
 
-      <div className="mb-4 flex gap-3">
+      <div className="deck-slots-mobile mb-4">
         {[0, 1, 2, 3].map((slotIndex) => {
           const cardId = deckCardIds[slotIndex];
           return (
@@ -105,7 +109,7 @@ export const DeckZone = ({ onOpenBuilder }) => {
           animate={{ opacity: 1, height: 'auto' }}
         >
           {activeSynergies.map((syn) => (
-            <div key={syn.id} className="flex items-center gap-2 text-sm font-medium text-[var(--sage)]">
+            <div key={syn.id} className="flex items-center gap-2 text-[14px] font-medium text-[var(--sage)]">
               <span>✨</span>
               <span>Синергия активна: {syn.name} — {syn.description}</span>
             </div>
@@ -115,7 +119,7 @@ export const DeckZone = ({ onOpenBuilder }) => {
 
       {nearHint && (
         <div className="synergy-hint mt-2 rounded-[var(--r-md)] p-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-[var(--sand)]">
+          <div className="flex items-center gap-2 text-[14px] font-medium text-[var(--sand)]">
             <span>💡</span>
             <span>Добавь ещё {nearHint.missing} карту для синергии «{nearHint.synergy.name}»</span>
           </div>

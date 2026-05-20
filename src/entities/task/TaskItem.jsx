@@ -49,14 +49,18 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
   return (
     <motion.button
       type="button"
+      layout
       onClick={isInteractive ? toggle : undefined}
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: isCompleted ? -28 : 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04 }}
-      className={`task-card relative flex w-full items-center gap-4 rounded-[var(--r-md)] border border-[var(--border-soft)] p-4 text-left transition-all duration-[400ms] ${
+      exit={{ opacity: 0, y: 60, scale: 0.85, transition: { duration: 0.45, ease: 'easeOut' } }}
+      transition={{ layout: { duration: 0.45, ease: 'easeOut' }, delay: isCompleted ? 0.05 : index * 0.04, type: 'spring', stiffness: 250, damping: 30 }}
+      className={`task-card relative flex w-full items-center gap-4 rounded-[var(--r-md)] border border-[var(--border-soft)] p-4 text-left ${
         isCompleted
           ? 'bg-[var(--sage-bg)] border-[var(--sage-light)]'
-          : 'bg-[var(--bg-surface)] hover:shadow-sm'
+          : animating
+            ? 'bg-[var(--bg-surface)] ring-2 ring-[var(--sage)] ring-offset-2'
+            : 'bg-[var(--bg-surface)] hover:shadow-sm'
       } ${!isInteractive ? 'opacity-60' : ''}`}
       style={{
         cursor: isInteractive ? 'pointer' : 'default',
@@ -79,14 +83,13 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
 
       <div className="relative shrink-0">
         <span
-          className={`relative grid h-[28px] w-[28px] place-items-center rounded-full border-2 text-sm font-semibold transition-all duration-[350ms] ${
-            animating ? 'scale-[0.85]' : ''
-          } ${
-            isCompleted
-              ? 'border-[var(--sage)] bg-[var(--sage)] text-white'
-              : 'border-[var(--border-medium)] bg-[var(--bg-surface)] text-transparent'
+          className={`relative grid h-[28px] w-[28px] place-items-center rounded-full border-2 text-sm font-semibold transition-all duration-[400ms] ease-out ${
+            animating
+              ? 'scale-110 border-[var(--sage)] bg-[var(--sage)] text-white'
+              : isCompleted
+                ? 'border-[var(--sage)] bg-[var(--sage)] text-white'
+                : 'border-[var(--border-medium)] bg-[var(--bg-surface)] text-transparent'
           }`}
-          style={animating ? { transform: 'scale(0.85)' } : {}}
         >
           ✓
         </span>

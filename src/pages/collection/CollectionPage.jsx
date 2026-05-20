@@ -184,7 +184,7 @@ export const CollectionPage = () => {
           </section>
 
           {/* Сетка карточек */}
-          <section className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+          <section className="cards-grid-mobile md:grid md:grid-cols-4 lg:grid-cols-5 md:gap-3">
             {visibleCards.map((card) => {
               const owned = collectionMap.get(card.id);
               return (

@@ -51,7 +51,7 @@ export const BossArena = ({ boss, lastDamageEvent }) => {
   }, [boss.phase]);
 
   return (
-    <div className={`boss-arena phase-${boss.phase || 1} relative overflow-hidden rounded-[var(--r-lg)]`}>
+    <div className={`boss-arena battle-arena-mobile phase-${boss.phase || 1} relative overflow-hidden rounded-[var(--r-lg)]`}>
       <div className="arena-glow pointer-events-none absolute inset-0 rounded-[var(--r-lg)]" style={{
         background: isPhase2
           ? 'radial-gradient(ellipse at center top, rgba(196,123,106,0.2) 0%, transparent 70%)'
@@ -97,8 +97,8 @@ export const BossArena = ({ boss, lastDamageEvent }) => {
           </AnimatePresence>
         </div>
 
-        <h1 className="mb-1 font-['DM_Serif_Display'] text-[20px] text-[var(--text-primary)]">{boss.name}</h1>
-        <p className="mb-4 text-sm font-medium text-[var(--text-secondary)]">{boss.subtitle}</p>
+        <h1 className="mb-1 font-['DM_Serif_Display'] text-[22px] md:text-[20px] text-[var(--text-primary)]">{boss.name}</h1>
+        <p className="mb-4 text-[14px] font-medium text-[var(--text-secondary)]">{boss.subtitle}</p>
 
         <div className={`mx-auto mb-4 w-full max-w-[400px] ${hpBarClass}`}>
           <div className="rounded-[var(--r-full)] bg-[var(--bg-elevated)] border border-[var(--border-soft)]" style={{ height: 10 }}>
@@ -112,22 +112,22 @@ export const BossArena = ({ boss, lastDamageEvent }) => {
           </div>
         </div>
 
-        <div className="mb-2 text-sm font-medium text-[var(--text-secondary)]">
+        <div className="mb-2 text-[14px] font-medium text-[var(--text-secondary)]">
           {boss.hp} / {boss.maxHp} HP
         </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-          <span className="pill">
+          <span className="pill min-h-[36px]">
             🎯 {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label}
           </span>
-          <span className={`pill ${daysUrgent ? 'text-[var(--clay)]' : ''}`}>
+          <span className={`pill min-h-[36px] ${daysUrgent ? 'text-[var(--clay)]' : ''}`}>
             ⏳ {boss.daysLeft} {boss.daysLeft === 1 ? 'день' : boss.daysLeft < 5 ? 'дня' : 'дней'}
           </span>
         </div>
 
         {isPhase2 && (
           <motion.div
-            className="inline-block rounded-full bg-[var(--clay-bg)] px-4 py-1.5 text-xs font-semibold text-[var(--clay)]"
+            className="inline-block rounded-full bg-[var(--clay-bg)] px-4 py-2 text-[13px] font-semibold text-[var(--clay)]"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
           >
