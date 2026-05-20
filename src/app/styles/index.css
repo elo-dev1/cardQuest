@@ -91,6 +91,116 @@
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ===== DARK THEME — Warm Dark ===== */
+html.dark {
+  /* Фоны — тёплый тёмный уголь */
+  --bg-app:        #1A1816;
+  --bg-surface:    #242120;
+  --bg-elevated:   #1E1B19;
+  --bg-overlay:    rgba(26, 24, 22, 0.92);
+  --bg-card:       #242120;
+  --bg-sidebar:    #242120;
+  --bg-input:      #1E1B19;
+
+  /* Акценты — чуть ярче для контраста */
+  --sage:          #A3C49F;
+  --sage-light:    #7BA875;
+  --sage-bg:       rgba(163, 196, 159, 0.10);
+
+  --sand:          #D4B88E;
+  --sand-light:    #C4A478;
+  --sand-bg:       rgba(212, 184, 142, 0.10);
+
+  --clay:          #D48E7E;
+  --clay-light:    #C47E6E;
+  --clay-bg:       rgba(212, 142, 126, 0.10);
+
+  --slate:         #8FA3B8;
+  --slate-light:   #7A90A8;
+  --slate-bg:      rgba(143, 163, 184, 0.10);
+
+  --lavender:      #AFA2D4;
+  --lavender-light:#9B8EC4;
+  --lavender-bg:   rgba(175, 162, 212, 0.10);
+
+  --charcoal:      #E8E2DA;
+
+  /* Текст */
+  --text-primary:   #E8E2DA;
+  --text-secondary: #9A9188;
+  --text-tertiary:  #6B635B;
+  --text-inverse:   #1A1816;
+  --text-white:     #E8E2DA;
+  --text-muted:     #9A9188;
+  --text-purple:    var(--slate);
+
+  /* Бордеры */
+  --border-soft:    rgba(232, 226, 218, 0.06);
+  --border-medium:  rgba(232, 226, 218, 0.12);
+  --border-strong:  rgba(232, 226, 218, 0.20);
+  --border:         rgba(232, 226, 218, 0.06);
+
+  /* Тени — тёмные */
+  --shadow-xs: 0 1px 3px rgba(0,0,0,0.2);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(232,226,218,0.04);
+  --shadow-purple: 0 4px 20px rgba(0,0,0,0.4);
+  --shadow-gold: 0 4px 16px rgba(212,184,142,0.25);
+}
+
+/* Dark mode button overrides */
+html.dark .btn-primary {
+  background: var(--charcoal);
+  color: var(--text-inverse);
+}
+
+html.dark .btn-primary:hover {
+  background: #D4CEC6;
+  box-shadow: var(--shadow-md);
+}
+
+html.dark .btn-secondary:hover {
+  background: var(--bg-elevated);
+}
+
+html.dark .btn-ghost:hover {
+  background: var(--bg-surface);
+}
+
+html.dark .card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+html.dark .input-field:focus {
+  box-shadow: 0 0 0 4px rgba(232,226,218,0.08);
+}
+
+html.dark .progress-fill::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+html.dark .boss-image {
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+}
+
+html.dark .card-selected-overlay {
+  background: rgba(232,226,218,0.08);
+}
+
+html.dark .weakness-dot {
+  border-color: var(--bg-surface);
+}
+
+html.dark .tab-bar {
+  background: rgba(36,33,32,0.95);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
+}
+
+html.dark .tab-item.active .tab-label { color: var(--charcoal); }
+html.dark .tab-item.active .tab-icon::after { color: var(--charcoal); }
+
 * {
   box-sizing: border-box;
 }
