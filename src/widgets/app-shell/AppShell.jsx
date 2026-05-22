@@ -9,6 +9,10 @@ import { ToastContainer } from '@/shared/ui/ToastContainer';
 import { GlobalConfetti } from '@/shared/ui/GlobalConfetti';
 import { TaskEffect } from '@/shared/ui/TaskEffect';
 import { ExchangeNotifications } from '@/features/card-exchange/ui/ExchangeNotifications';
+import { PwaInstallBanner } from '@/widgets/pwa-install-banner/PwaInstallBanner';
+import { PwaUpdatePrompt } from '@/widgets/pwa-update-prompt/PwaUpdatePrompt';
+import '@/widgets/pwa-install-banner/PwaInstallBanner.css';
+import '@/widgets/pwa-update-prompt/PwaUpdatePrompt.css';
 import { useStore } from '@/shared/store/useStore';
 
 export const AppShell = () => {
@@ -41,6 +45,9 @@ export const AppShell = () => {
       <GlobalConfetti />
       <TaskEffect />
       <ExchangeNotifications />
+
+      <PwaInstallBanner />
+      <PwaUpdatePrompt />
     </div>
   );
 };

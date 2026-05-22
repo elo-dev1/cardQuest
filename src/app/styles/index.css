@@ -917,7 +917,6 @@ html {
 
 .main-content {
   padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
   min-height: 100dvh;
 }
 
@@ -1479,3 +1478,128 @@ html.dark .tab-item.active::after {
     align-items: center;
   }
 }
+
+/* ===== PWA NATIVE EXPERIENCE ===== */
+
+html, body {
+  overflow-x: hidden;
+}
+
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+.pwa-safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pwa-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pwa-safe-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.pwa-safe-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button,
+  [role="button"],
+  .tab-item,
+  .pill,
+  .card {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  button:active,
+  [role="button"]:active,
+  .tab-item:active,
+  .pill:active {
+    opacity: 0.7;
+    transform: scale(0.97);
+  }
+}
+
+/* ===== SCROLLBAR HIDING (mobile & PWA) ===== */
+
+@media (max-width: 767px), (display-mode: standalone) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+@media (display-mode: standalone) {
+  html {
+    overscroll-behavior-y: contain;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .mobile-header {
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
+
+  .tab-bar {
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bottom-sheet {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.pwa-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--splash-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  transition: opacity 0.4s ease;
+}
+
+.pwa-splash.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
