@@ -40,7 +40,7 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
       } else {
         fireConfetti();
       }
-      setFloating(`+${result.reward.xp} XP · +${result.reward.coins} 💰`);
+      setFloating(<>{result.reward.xp} XP · +{result.reward.coins} <img src="/common/money.png" alt="" className="inline-block w-4 h-4 align-text-bottom" /></>);
       addToast(`Молодец! +${result.reward.xp} XP заработано 🎉`, 'reward');
       window.setTimeout(() => setFloating(null), 1500);
     }
@@ -73,7 +73,7 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
         </span>
         <div className="mt-1.5 flex items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full bg-[var(--bg-elevated)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
-            {category?.icon} {category?.label}
+            <img src={category?.iconSrc} alt="" className="inline-block w-3 h-3 align-text-bottom" /> {category?.label}
           </span>
           <span className="inline-flex rounded-full bg-[var(--bg-elevated)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
             {difficulty.label}

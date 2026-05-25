@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { CATEGORIES } from '@/shared/data/taskTemplates';
 import { HERO_CLASSES } from '@/shared/data/memberData';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { TaskItem } from '@/entities/task/TaskItem';
@@ -60,9 +61,7 @@ export const TasksPage = () => {
             onClick={() => chooseMember(item.id)}
             className={`member-avatar-btn ${item.id === member?.id ? 'active' : 'opacity-50'}`}
           >
-            <div className="member-avatar-circle">
-              {item.avatar}
-            </div>
+            <MemberAvatar avatar={item.avatar} className="member-avatar-circle" />
             <span className="member-avatar-name">{item.name.split(' ')[0]}</span>
           </button>
         ))}
@@ -79,11 +78,9 @@ export const TasksPage = () => {
               item.id === member?.id ? '' : 'opacity-50 hover:opacity-80'
             }`}
           >
-            <div className={`grid h-12 w-12 place-items-center rounded-full text-xl transition ${
+            <MemberAvatar avatar={item.avatar} className={`h-12 w-12 rounded-full transition ${
               item.id === member?.id ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
-            }`}>
-              {item.avatar}
-            </div>
+            }`} />
             <span className="text-[11px] font-medium text-[var(--text-secondary)]">{item.name.split(' ')[0]}</span>
           </button>
         ))}
@@ -98,12 +95,12 @@ export const TasksPage = () => {
             </div>
           )}
           <div className="flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--bg-elevated)] text-2xl">{member.avatar}</div>
+            <MemberAvatar avatar={member.avatar} className="h-12 w-12 rounded-full bg-[var(--bg-elevated)] text-2xl" />
             <div className="min-w-0 flex-1">
               <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">{member.name}</h1>
               {isOwnProfile && (
                 <p className="text-[13px] font-medium text-[var(--text-secondary)]">
-                  {progress.completed} из {progress.total} · {member.xp} XP · {member.coins} 💰
+                  {progress.completed} из {progress.total} · {member.xp} XP · {member.coins} <img src="/common/money.png" alt="" className="inline-block w-4 h-4 align-text-bottom" />
                 </p>
               )}
             </div>
@@ -141,7 +138,7 @@ export const TasksPage = () => {
               onClick={() => setCategory(key)}
               className={`pill shrink-0 min-h-[44px] ${category === key ? 'active' : ''}`}
             >
-              {item.icon} {item.label}
+              <img src={item.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {item.label}
             </button>
           ))}
       </section>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AVATARS, HERO_CLASSES } from '@/shared/data/memberData';
+import { AvatarPicker } from '@/shared/ui/AvatarPicker';
 import { useAuth } from '@/features/auth/model/useAuth';
 import { acceptInvitation, checkInviteCode } from '@/features/invite/model/inviteActions';
 import { useStore } from '@/shared/store/useStore';
@@ -140,22 +141,8 @@ export const JoinPage = () => {
               />
             </label>
 
-            <div className="mb-5">
-              <div className="mb-2 text-sm font-medium text-[var(--text-primary)]">Аватар</div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {AVATARS.map((avatar) => (
-                  <button
-                    key={avatar}
-                    type="button"
-                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl transition ${
-                      profile.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
-                    }`}
-                    onClick={() => setProfile((current) => ({ ...current, avatar }))}
-                  >
-                    {avatar}
-                  </button>
-                ))}
-              </div>
+            <div className="mb-7">
+              <AvatarPicker value={profile.avatar} onChange={(avatar) => setProfile((current) => ({ ...current, avatar }))} />
             </div>
 
             <div className="mb-6 grid grid-cols-2 gap-2">
@@ -170,7 +157,7 @@ export const JoinPage = () => {
                   }`}
                   onClick={() => setProfile((current) => ({ ...current, heroClass: key }))}
                 >
-                  <div className="text-xl">{heroClass.icon}</div>
+                  <div className="flex items-center justify-center h-7 w-7">{heroClass.iconSrc ? <img src={heroClass.iconSrc} alt="" className="w-5 h-5" /> : <span className="text-xl">{heroClass.icon}</span>}</div>
                   <div className="text-sm font-semibold">{heroClass.label}</div>
                 </button>
               ))}

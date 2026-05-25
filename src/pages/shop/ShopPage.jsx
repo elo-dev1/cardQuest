@@ -80,7 +80,7 @@ export const ShopPage = () => {
       <header className="text-center">
         <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">Магазин гильдии</h1>
         <div className="mt-2 flex justify-center gap-2">
-          <span className="pill">💰 {family?.coins || 0} монет</span>
+          <span className="pill"><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {family?.coins || 0} монет</span>
           <span className="pill">💎 {family?.gems || 0} кристаллов</span>
         </div>
       </header>
@@ -111,7 +111,7 @@ export const ShopPage = () => {
               <p className="mb-4 min-h-[40px] text-sm font-medium text-[var(--text-secondary)]">
                 {pack.cards} карты · {pack.guarantee}
               </p>
-              <div className="mb-4 text-lg font-semibold text-[var(--sand)]">💰 {pack.price_coins}</div>
+              <div className="mb-4 text-lg font-semibold text-[var(--sand)]"><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {pack.price_coins}</div>
               <button type="button" className="btn-primary w-full px-4 py-2" onClick={() => buyPack(pack)}>
                 Купить
               </button>
@@ -129,7 +129,7 @@ export const ShopPage = () => {
               <div key={item.id} className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-4 text-center">
                 <div className="mb-3 text-5xl">{item.emoji}</div>
                 <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">{item.name}</h2>
-                <div className="mb-3 text-sm font-medium text-[var(--sand)]">💰 {item.price}</div>
+                <div className="mb-3 text-sm font-medium text-[var(--sand)]"><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {item.price}</div>
                 <button
                   type="button"
                   className={`${owned ? 'btn-secondary' : 'btn-primary'} w-full px-3 py-2 text-xs`}
@@ -170,7 +170,7 @@ export const ShopPage = () => {
                   }`}
                   onClick={() => handleBuyEffect(effect)}
                 >
-                  {active ? 'Активен ✓' : owned ? 'Выбрать' : `💰 ${effect.price}`}
+                  {active ? 'Активен ✓' : owned ? 'Выбрать' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {effect.price}</>}
                 </button>
               </div>
             );
@@ -204,7 +204,7 @@ export const ShopPage = () => {
                   }`}
                   onClick={() => handleBuyBackground(bg)}
                 >
-                  {active ? 'Активен ✓' : owned ? 'Выбрать' : `💰 ${bg.price}`}
+                  {active ? 'Активен ✓' : owned ? 'Выбрать' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {bg.price}</>}
                 </button>
               </div>
             );
@@ -236,7 +236,7 @@ export const ShopPage = () => {
                   }`}
                   onClick={() => handleBuyBoost(boost)}
                 >
-                  {active ? 'Активен ✓' : `💰 ${boost.price}`}
+                  {active ? 'Активен ✓' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {boost.price}</>}
                 </button>
               </div>
             );

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/shared/store/useStore';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 
 export const MobileHeader = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export const MobileHeader = () => {
         className="mobile-header-avatar"
         onClick={handleAvatarClick}
       >
-        {member.avatar}
+        <MemberAvatar avatar={member.avatar} className="h-full w-full" />
       </button>
       <span className="mobile-header-name">{member.name}</span>
       <button
@@ -35,7 +36,7 @@ export const MobileHeader = () => {
         className="mobile-header-coins"
         onClick={handleCoinsClick}
       >
-        <span>💰</span>
+        <img src="/common/money.png" alt="" className="h-5 w-5" />
         <span>{member.coins || 0}</span>
       </button>
     </header>

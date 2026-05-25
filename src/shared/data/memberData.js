@@ -1,10 +1,8 @@
 export const HERO_CLASSES = {
-  warrior: { icon: '⚔️', label: 'Воин', bonus: 'activity' },
-  mage: { icon: '🧙', label: 'Маг', bonus: 'study' },
-  archer: { icon: '🏹', label: 'Лучник', bonus: 'home' },
-  healer: { icon: '💚', label: 'Целитель', bonus: 'health' },
-  guardian: { icon: '🛡️', label: 'Страж', bonus: 'care' },
-  ranger: { icon: '⚡', label: 'Следопыт', bonus: 'activity' },
+  warrior: { icon: '⚔️', iconSrc: '/hero/warrior.png', label: 'Воин', bonus: 'activity' },
+  mage: { icon: '🧙', iconSrc: '/hero/mage.png', label: 'Маг', bonus: 'study' },
+  healer: { icon: '💚', iconSrc: '/hero/healer.png', label: 'Целитель', bonus: 'health' },
+  guardian: { icon: '🛡️', iconSrc: '/hero/guardian.png', label: 'Страж', bonus: 'care' },
 };
 
 export const AVATARS = ['🧙', '⚔️', '🏹', '💚', '🛡️', '⚡', '🦸', '🧝', '🧚', '🐉', '🦊', '🐺'];

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { HERO_CLASSES } from '@/shared/data/memberData';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 
 const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', 'ok'];
@@ -94,11 +95,11 @@ export const ProfileSelectScreen = () => {
                       onClick={() => chooseMember(member)}
                     >
                       <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[var(--sand)] to-[var(--lavender)] p-[3px] text-3xl">
-                        <span className="grid h-full w-full place-items-center rounded-full bg-[var(--bg-surface)]">{member.avatar}</span>
+                        <MemberAvatar avatar={member.avatar} className="h-full w-full rounded-full bg-[var(--bg-surface)]" />
                       </div>
                       <div className="font-semibold text-[var(--text-primary)]">{member.name}</div>
                       <div className="text-xs font-medium text-[var(--text-secondary)]">
-                        {heroClass?.icon} {heroClass?.label} · ур. {member.level}
+                        {heroClass?.iconSrc ? <img src={heroClass.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> : heroClass?.icon} {heroClass?.label} · ур. {member.level}
                       </div>
                     </button>
                   );
@@ -110,7 +111,7 @@ export const ProfileSelectScreen = () => {
                   ← Назад к героям
                 </button>
                 <div className="mb-5 text-center">
-                  <div className="text-5xl">{selected.avatar}</div>
+                  <MemberAvatar avatar={selected.avatar} className="h-16 w-16 rounded-full bg-[var(--bg-surface)] text-5xl" />
                   <div className="mt-2 text-lg font-semibold text-[var(--text-primary)]">{selected.name}</div>
                 </div>
                 <div className="mb-5 flex justify-center gap-2">

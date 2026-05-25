@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CARD_LIBRARY, RARITIES } from '@/shared/data/cardData';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 import { CardView } from '@/entities/card/CardView';
 
@@ -130,7 +131,7 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
                         : 'border-[var(--border-soft)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
                     }`}
                   >
-                    <div className="grid h-8 w-8 place-items-center rounded-full bg-[var(--bg-elevated)] text-xl">{member.avatar}</div>
+                    <MemberAvatar avatar={member.avatar} className="h-8 w-8 rounded-full bg-[var(--bg-elevated)] text-xl" />
                     <div className="text-left">
                       <div className="text-sm font-semibold text-[var(--text-primary)]">{member.name}</div>
                       <div className="text-xs font-medium text-[var(--text-tertiary)]">{member.role === 'child' ? 'Ребёнок' : 'Взрослый'}</div>

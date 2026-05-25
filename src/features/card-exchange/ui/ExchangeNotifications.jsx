@@ -25,7 +25,8 @@ export const ExchangeNotifications = () => {
         const offeredCard = CARD_LIBRARY.find((c) => c.id === exchange.offeredCardId);
         const requestedCard = CARD_LIBRARY.find((c) => c.id === exchange.requestedCardId);
 
-        const message = `${initiator?.avatar || '👤'} ${initiator?.name || 'Игрок'} предлагает обмен: ${
+        const avatarDisplay = initiator?.avatar?.startsWith('data:') ? '👤' : (initiator?.avatar || '👤');
+        const message = `${avatarDisplay} ${initiator?.name || 'Игрок'} предлагает обмен: ${
           offeredCard?.emoji || '🎴'
         } ${offeredCard?.name || 'карточка'} ↔ ${requestedCard?.emoji || '🎴'} ${requestedCard?.name || 'карточка'}`;
 

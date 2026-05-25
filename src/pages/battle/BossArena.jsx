@@ -118,7 +118,7 @@ export const BossArena = ({ boss, lastDamageEvent }) => {
 
         <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
           <span className="pill min-h-[36px]">
-            🎯 {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label}
+            🎯 <img src={CATEGORIES[boss.weakness]?.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {CATEGORIES[boss.weakness]?.label}
           </span>
           <span className={`pill min-h-[36px] ${daysUrgent ? 'text-[var(--clay)]' : ''}`}>
             ⏳ {boss.daysLeft} {boss.daysLeft === 1 ? 'день' : boss.daysLeft < 5 ? 'дня' : 'дней'}

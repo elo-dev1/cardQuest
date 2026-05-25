@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AVATARS, HERO_CLASSES } from '@/shared/data/memberData';
+import { AvatarPicker } from '@/shared/ui/AvatarPicker';
 
 const classEntries = Object.entries(HERO_CLASSES);
 
 const makeInitial = (child) => ({
   name: child?.name ?? '',
   avatar: child?.avatar ?? AVATARS[2],
-  heroClass: child?.classId ?? child?.hero_class ?? 'archer',
+  heroClass: child?.classId ?? child?.hero_class ?? 'warrior',
   pin: child?.pin ?? '',
 });
 
@@ -75,24 +76,9 @@ export const AddChildModal = ({ child = null, open, onClose, onSubmit }) => {
               />
             </label>
 
-            <div className="mb-4">
-              <div className="mb-2 text-sm font-medium text-[var(--text-primary)]">Аватар</div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {AVATARS.map((avatar) => (
-                  <button
-                    type="button"
-                    key={avatar}
-                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg transition ${
-                      form.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
-                    }`}
-                    onClick={() => setForm((current) => ({ ...current, avatar }))}
-                  >
-                    {avatar}
-                  </button>
-                ))}
-              </div>
+            <div className="mb-6">
+              <AvatarPicker value={form.avatar} onChange={(avatar) => setForm((current) => ({ ...current, avatar }))} />
             </div>
-
             <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {classEntries.map(([key, heroClass]) => (
                 <button
@@ -103,7 +89,7 @@ export const AddChildModal = ({ child = null, open, onClose, onSubmit }) => {
                   }`}
                   onClick={() => setForm((current) => ({ ...current, heroClass: key }))}
                 >
-                  <div className="text-xl">{heroClass.icon}</div>
+                  <div className="flex items-center justify-center h-7 w-7">{heroClass.iconSrc ? <img src={heroClass.iconSrc} alt="" className="w-5 h-5" /> : <span className="text-xl">{heroClass.icon}</span>}</div>
                   <div className="text-sm font-semibold">{heroClass.label}</div>
                 </button>
               ))}

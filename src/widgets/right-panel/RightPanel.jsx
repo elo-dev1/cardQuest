@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { CATEGORIES } from '@/shared/data/taskTemplates';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 import { todayKey } from '@/shared/lib/date';
 
@@ -54,7 +55,7 @@ export const RightPanel = () => {
             const progress = getMemberProgress(member.id);
             return (
               <div key={member.id} className="flex items-center gap-2.5">
-                <div className="grid h-7 w-7 place-items-center rounded-full bg-[var(--bg-elevated)] text-sm">{member.avatar}</div>
+                <MemberAvatar avatar={member.avatar} className="h-7 w-7 rounded-full bg-[var(--bg-elevated)] text-sm" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between text-xs font-medium text-[var(--text-secondary)]">
                     <span>{member.name}</span>
@@ -82,7 +83,7 @@ export const RightPanel = () => {
           <div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">{boss.name}</h3>
             <div className="text-xs font-medium text-[var(--text-tertiary)]">
-              {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label}
+              <img src={CATEGORIES[boss.weakness]?.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {CATEGORIES[boss.weakness]?.label}
             </div>
           </div>
         </div>

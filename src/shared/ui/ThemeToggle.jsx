@@ -12,7 +12,10 @@ export const ThemeToggle = () => {
       onClick={toggleTheme}
       title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
     >
-      {theme === 'dark' ? '☀️' : '🌙'}
+      {theme === 'dark'
+        ? <img src="/common/light.png" alt="" className="h-7 w-7" />
+        : <img src="/common/night.png" alt="" className="h-7 w-7" />
+      }
     </button>
   );
 };

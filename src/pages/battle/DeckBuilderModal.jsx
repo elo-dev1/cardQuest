@@ -121,7 +121,7 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
 
       {/* Подсказка о слабости босса */}
       <div className="mb-4 rounded-[var(--r-md)] bg-[var(--clay-bg)] p-3.5 text-[14px] font-medium text-[var(--clay)]">
-        🎯 Босс слаб к {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label}
+        🎯 Босс слаб к <img src={CATEGORIES[boss.weakness]?.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {CATEGORIES[boss.weakness]?.label}
       </div>
 
       {/* Слоты колоды — горизонтальный скролл */}
@@ -173,10 +173,10 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
             key={cat}
             type="button"
             onClick={() => setActiveFilter(cat)}
-            className={`pill shrink-0 min-h-[44px] text-[13px] font-medium ${activeFilter === cat ? 'active' : ''}`}
-          >
-            {cat === 'all' ? 'Все' : `${CATEGORIES[cat]?.icon} ${CATEGORIES[cat]?.label}`}
-          </button>
+              className={`pill shrink-0 min-h-[44px] text-[13px] font-medium ${activeFilter === cat ? 'active' : ''}`}
+            >
+              {cat === 'all' ? 'Все' : <><img src={CATEGORIES[cat]?.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {CATEGORIES[cat]?.label}</>}
+            </button>
         ))}
       </div>
 
@@ -224,7 +224,7 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
       </div>
 
       <div className="mb-4 rounded-[var(--r-md)] bg-[var(--clay-bg)] p-3 text-sm font-medium text-[var(--clay)]">
-        🎯 Босс слаб к {CATEGORIES[boss.weakness]?.icon} {CATEGORIES[boss.weakness]?.label} — выбирай такие карточки!
+        🎯 Босс слаб к <img src={CATEGORIES[boss.weakness]?.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {CATEGORIES[boss.weakness]?.label} — выбирай такие карточки!
       </div>
 
       <div className="mb-4 flex gap-2">
@@ -272,10 +272,10 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
             key={cat}
             type="button"
             onClick={() => setActiveFilter(cat)}
-            className={`pill text-xs ${activeFilter === cat ? 'active' : ''}`}
-          >
-            {cat === 'all' ? 'Все' : `${CATEGORIES[cat]?.icon} ${CATEGORIES[cat]?.label}`}
-          </button>
+              className={`pill text-xs ${activeFilter === cat ? 'active' : ''}`}
+            >
+              {cat === 'all' ? 'Все' : <><img src={CATEGORIES[cat]?.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {CATEGORIES[cat]?.label}</>}
+            </button>
         ))}
       </div>
 

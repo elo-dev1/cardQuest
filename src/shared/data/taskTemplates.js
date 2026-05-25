@@ -1,10 +1,10 @@
 export const CATEGORIES = {
-  health: { icon: '💧', label: 'Здоровье', color: 'bg-blue-100 text-blue-700', gradient: '#06b6d4,#0891b2' },
-  activity: { icon: '🏃', label: 'Активность', color: 'bg-orange-100 text-orange-700', gradient: '#f97316,#ea580c' },
-  study: { icon: '📚', label: 'Учёба', color: 'bg-blue-100 text-blue-700', gradient: '#3b82f6,#2563eb' },
-  home: { icon: '🏠', label: 'По дому', color: 'bg-green-100 text-green-700', gradient: '#10b981,#059669' },
-  care: { icon: '❤️', label: 'Забота', color: 'bg-pink-100 text-pink-700', gradient: '#ec4899,#db2777' },
-  special: { icon: '✨', label: 'Особая', color: 'bg-purple-100 text-purple-700', gradient: '#8b5cf6,#7c3aed' },
+  health: { icon: '💧', label: 'Здоровье', iconSrc: '/categories/healthy.png', color: 'bg-blue-100 text-blue-700', gradient: '#06b6d4,#0891b2' },
+  activity: { icon: '🏃', label: 'Активность', iconSrc: '/categories/activity.png', color: 'bg-orange-100 text-orange-700', gradient: '#f97316,#ea580c' },
+  study: { icon: '📚', label: 'Учёба', iconSrc: '/categories/study.png', color: 'bg-blue-100 text-blue-700', gradient: '#3b82f6,#2563eb' },
+  home: { icon: '🏠', label: 'По дому', iconSrc: '/categories/home.png', color: 'bg-green-100 text-green-700', gradient: '#10b981,#059669' },
+  care: { icon: '❤️', label: 'Забота', iconSrc: '/categories/care.png', color: 'bg-pink-100 text-pink-700', gradient: '#ec4899,#db2777' },
+  special: { icon: '✨', label: 'Особая', iconSrc: '/categories/healthy.png', color: 'bg-purple-100 text-purple-700', gradient: '#8b5cf6,#7c3aed' },
 };
 
 export const DIFFICULTY = {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CATEGORIES } from '@/shared/data/taskTemplates';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 
 const categoryEntries = Object.entries(CATEGORIES).filter(([key]) => key !== 'special');
@@ -14,6 +15,7 @@ const ASSIGN_TO_OPTIONS = [
 const REPEAT_OPTIONS = [
   { value: 'daily', label: 'Ежедневно' },
   { value: 'weekly', label: 'Еженедельно' },
+  { value: 'once', label: 'Единоразово' },
 ];
 
 export const AddTaskModal = ({ open, onClose }) => {
@@ -97,7 +99,7 @@ export const AddTaskModal = ({ open, onClose }) => {
                     className={`pill ${form.category === key ? 'active' : ''}`}
                     onClick={() => setForm((f) => ({ ...f, category: key }))}
                   >
-                    {cat.icon} {cat.label}
+                    <img src={cat.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {cat.label}
                   </button>
                 ))}
               </div>
@@ -125,7 +127,7 @@ export const AddTaskModal = ({ open, onClose }) => {
                     className={`pill ${form.assigned_to === member.id ? 'active' : ''}`}
                     onClick={() => setForm((f) => ({ ...f, assigned_to: member.id }))}
                   >
-                    {member.avatar} {member.name}
+                    <MemberAvatar avatar={member.avatar} className="w-5 h-5 rounded-full bg-[var(--bg-elevated)] text-xs" /> {member.name}
                   </button>
                 ))}
               </div>

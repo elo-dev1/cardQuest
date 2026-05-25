@@ -4,8 +4,8 @@ import { ru } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 import { CARD_LIBRARY } from '@/shared/data/cardData';
-import { DIFFICULTY } from '@/shared/data/taskTemplates';
 import { useStore } from '@/shared/store/useStore';
+import { todayKey } from '@/shared/lib/date';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { CardView } from '@/entities/card/CardView';
 
@@ -18,11 +18,11 @@ export const HomePage = () => {
   
   const todayRewards = useMemo(() => {
     return tasks
-      .filter((task) => completions.some((item) => item.taskId === task.id && item.memberId === member?.id))
+      .filter((task) => completions.some((item) => item.taskId === task.id && item.memberId === member?.id && item.date === todayKey()))
       .reduce(
         (acc, task) => {
-          const reward = DIFFICULTY[task.difficulty];
-          return { xp: acc.xp + reward.xp, coins: acc.coins + reward.coins };
+          const base = { easy: 10, medium: 20, hard: 40 }[task.difficulty] || 10;
+          return { xp: acc.xp + Math.round(base / 2), coins: acc.coins + Math.round(base / 2) };
         },
         { xp: 0, coins: 0 },
       );
@@ -68,12 +68,12 @@ export const HomePage = () => {
       {/* Стат-плитки — мобильная версия */}
       <section className="stat-tiles-mobile md:grid md:grid-cols-3 md:gap-[10px]">
         {[
-          { value: `${progress.completed}/${progress.total}`, label: 'задач', icon: '✅' },
-          { value: `+${todayRewards.xp}`, label: 'XP', icon: '⭐' },
-          { value: `+${todayRewards.coins}`, label: 'монет', icon: '💰' },
+          { value: `${progress.completed}/${progress.total}`, label: 'задач', icon: '/common/completed.png' },
+          { value: `+${todayRewards.xp}`, label: 'XP', icon: '/common/xp.png' },
+          { value: `+${todayRewards.coins}`, label: 'монет', icon: '/common/money.png' },
         ].map((item) => (
           <div key={item.label} className="stat-tile-mobile md:rounded-[var(--r-lg)] md:bg-[var(--bg-surface)] md:p-4 md:text-center md:shadow-[var(--shadow-card)] md:border md:border-[var(--border-soft)]">
-            <div className="text-2xl mb-1 hidden md:block">{item.icon}</div>
+            <div className="text-2xl mb-1 hidden md:block"><img src={item.icon} alt="" className="inline-block w-7 h-7" /></div>
             <div className="stat-tile-number md:font-['DM_Serif_Display'] md:text-[28px] md:leading-none md:text-[var(--text-primary)]">{item.value}</div>
             <div className="stat-tile-label md:mt-1 md:text-[11px] md:font-medium md:uppercase md:tracking-wide md:text-[var(--text-tertiary)]">{item.label}</div>
           </div>
@@ -131,7 +131,7 @@ export const HomePage = () => {
         </div>
         <ProgressBar value={46} height={8} variant="sage" />
         <div className="mt-3 flex items-center justify-between text-[13px] font-medium text-[var(--text-secondary)]">
-          <span>Награда: редкий пак + 150 💰</span>
+          <span>Награда: редкий пак + 150 <img src="/common/money.png" alt="" className="inline-block w-4 h-4 align-text-bottom" /></span>
           <span>4 дня</span>
         </div>
       </section>

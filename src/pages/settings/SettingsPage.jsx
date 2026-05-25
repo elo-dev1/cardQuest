@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HERO_CLASSES } from '@/shared/data/memberData';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { AddChildModal } from '@/features/add-child/ui/AddChildModal';
 import { generateInviteCode, getFamilyInvitations, getInviteUrl, revokeInvitation } from '@/features/invite/model/inviteActions';
 import { useStore } from '@/shared/store/useStore';
@@ -194,11 +195,11 @@ export const SettingsPage = () => {
             const canDelete = canManage && member.member_role !== 'owner';
             return (
               <div key={member.id} className="flex flex-wrap items-center gap-3 rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3">
-                <div className="text-2xl">{member.avatar}</div>
+                <MemberAvatar avatar={member.avatar} className="h-10 w-10 rounded-full bg-[var(--bg-elevated)] text-2xl" />
                 <div className="min-w-[150px] flex-1">
                   <div className="font-semibold text-[var(--text-primary)]">{member.name}</div>
                   <div className="text-xs font-medium text-[var(--text-secondary)]">
-                    {heroClass?.icon} {heroClass?.label} · ур. {member.level}
+                    {heroClass?.iconSrc ? <img src={heroClass.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> : heroClass?.icon} {heroClass?.label} · ур. {member.level}
                   </div>
                 </div>
                 <span className="rounded-full bg-[var(--bg-surface)] px-3 py-1 text-xs font-medium text-[var(--slate)] shadow-sm">
@@ -291,8 +292,8 @@ export const SettingsPage = () => {
         <hr className="my-4 border-[var(--border-soft)]" />
         <div className="inline-grid grid-cols-2 gap-1 rounded-full bg-[var(--bg-elevated)] p-1">
           {[
-            { value: 'dark', label: '🌙 Тёмная' },
-            { value: 'light', label: '☀️ Светлая' },
+            { value: 'dark', label: 'Тёмная', icon: '/common/night.png' },
+            { value: 'light', label: 'Светлая', icon: '/common/light.png' },
           ].map((option) => (
             <button
               key={option.value}
@@ -302,7 +303,7 @@ export const SettingsPage = () => {
               }`}
               onClick={() => theme !== option.value && toggleTheme()}
             >
-              {option.label}
+              <img src={option.icon} alt="" className="inline-block w-5 h-5 align-text-bottom" /> {option.label}
             </button>
           ))}
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { HERO_CLASSES } from '@/shared/data/memberData';
 import { useStore } from '@/shared/store/useStore';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { BACKGROUND_TYPES } from '@/shared/data/shopItems';
 
 export const FamilyPage = () => {
@@ -44,7 +45,7 @@ export const FamilyPage = () => {
           {podiumItems.map(({ member, medal, avatar, y }) => (
             <div key={member.id} className={`text-center ${y}`}>
               <div className={`${avatar} mx-auto grid place-items-center rounded-full bg-gradient-to-br from-[var(--sand)] to-[var(--lavender)] p-[3px]`}>
-                <span className="grid h-full w-full place-items-center rounded-full bg-[var(--bg-surface)]">{member.avatar}</span>
+                <MemberAvatar avatar={member.avatar} className="h-full w-full rounded-full bg-[var(--bg-surface)]" />
               </div>
               <div className="mt-3 text-2xl">{medal}</div>
               <div className={`font-semibold ${activeBg ? 'text-white' : 'text-[var(--text-primary)]'}`}>{member.name}</div>
@@ -73,11 +74,11 @@ export const FamilyPage = () => {
               className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex flex-wrap items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)] cursor-pointer md:cursor-default"
               onClick={() => setExpandedMemberId(isExpanded ? null : member.id)}
             >
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--bg-elevated)] text-2xl">{member.avatar}</div>
+              <MemberAvatar avatar={member.avatar} className="h-12 w-12 rounded-full bg-[var(--bg-elevated)] text-2xl" />
               <div className="min-w-[160px] flex-1">
                 <h3 className="font-semibold text-[var(--text-primary)]">{member.name}</h3>
                 <p className="text-[13px] font-medium text-[var(--text-secondary)]">
-                  {heroClass?.icon} {heroClass?.label} · ур. {member.level}
+                  {heroClass?.iconSrc ? <img src={heroClass.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> : heroClass?.icon} {heroClass?.label} · ур. {member.level}
                 </p>
               </div>
               <div className="min-w-[180px] flex-1">

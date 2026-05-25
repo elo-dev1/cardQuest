@@ -1,18 +1,19 @@
 import { NavLink } from "react-router-dom";
 import { ProgressBar } from "@/shared/ui/ProgressBar";
 import { ThemeToggle } from "@/shared/ui/ThemeToggle";
+import { MemberAvatar } from "@/shared/ui/MemberAvatar";
 import { HERO_CLASSES } from "@/shared/data/memberData";
 import { useStore } from "@/shared/store/useStore";
 
 const navItems = [
-  { to: "/home", label: "Главная", icon: "🏠" },
-  { to: "/tasks", label: "Задачи", icon: "✅" },
-  { to: "/collection", label: "Коллекция", icon: "🃏" },
-  { to: "/shop", label: "Магазин", icon: "🛒" },
-  { to: "/battle", label: "Битва", icon: "⚔️" },
-  { to: "/stats", label: "Статистика", icon: "📊" },
-  { to: "/family", label: "Семья", icon: "👨‍👩‍👧" },
-  { to: "/settings", label: "Настройки", icon: "⚙️" },
+  { to: "/home", label: "Главная", iconSrc: "/sidebar/home.png" },
+  { to: "/tasks", label: "Задачи", iconSrc: "/sidebar/tasks.png" },
+  { to: "/collection", label: "Коллекция", iconSrc: "/sidebar/collections.png" },
+  { to: "/shop", label: "Магазин", iconSrc: "/sidebar/shop.png" },
+  { to: "/battle", label: "Битва", iconSrc: "/sidebar/fight.png" },
+  { to: "/stats", label: "Статистика", iconSrc: "/sidebar/stats.png" },
+  { to: "/family", label: "Семья", iconSrc: "/sidebar/family.png" },
+  { to: "/settings", label: "Настройки", iconSrc: "/sidebar/settings.png" },
 ];
 
 export const Sidebar = () => {
@@ -34,15 +35,13 @@ export const Sidebar = () => {
           title="Сменить участника"
         >
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-surface)] text-xl">
-              {member.avatar}
-            </div>
+            <MemberAvatar avatar={member.avatar} className="h-9 w-9 rounded-full bg-[var(--bg-surface)] text-xl" />
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold text-[var(--text-primary)]">
                 {member.name}
               </div>
               <div className="text-xs font-medium text-[var(--text-secondary)]">
-                {heroClass?.icon} {heroClass?.label} · ур. {member.level}
+                {heroClass?.iconSrc ? <img src={heroClass.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> : heroClass?.icon} {heroClass?.label} · ур. {member.level}
               </div>
             </div>
           </div>
@@ -69,7 +68,7 @@ export const Sidebar = () => {
               }`
             }
           >
-            <span className="w-5 text-center text-[17px]">{item.icon}</span>
+            <img src={item.iconSrc} alt="" className="h-5 w-5 shrink-0" />
             {item.label}
           </NavLink>
         ))}
@@ -78,7 +77,7 @@ export const Sidebar = () => {
       <hr className="my-4 border-[var(--border-soft)]" />
 
       <div className="mb-3 flex items-center justify-between rounded-full bg-[var(--bg-elevated)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)]">
-        <span>💰 {family?.coins ?? 0}</span>
+        <span><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {family?.coins ?? 0}</span>
         <span>💎 {family?.gems ?? 0}</span>
       </div>
 

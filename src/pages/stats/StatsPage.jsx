@@ -3,13 +3,14 @@ import { ru } from 'date-fns/locale';
 import { CARD_LIBRARY } from '@/shared/data/cardData';
 import { CATEGORIES } from '@/shared/data/taskTemplates';
 import { lastDays } from '@/shared/lib/date';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 
 const achievements = [
   { icon: '🔥', title: 'Первый стрик', done: true },
   { icon: '✅', title: '10 задач', done: true },
-  { icon: '🃏', title: 'Коллекционер', done: true },
+  { icon: '/sidebar/collections.png', title: 'Коллекционер', done: true },
   { icon: '⚔️', title: 'Первый удар', done: true },
   { icon: '📚', title: 'Мудрец', done: false },
   { icon: '🏃', title: 'Скорость', done: false },
@@ -55,12 +56,12 @@ export const StatsPage = () => {
       {/* Summary cards */}
       <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {[
-          { icon: '✅', value: completions.length, label: 'задач' },
-          { icon: '⚔️', value: boss.hp === 0 ? 1 : 0, label: 'боссов' },
-          { icon: '🃏', value: `${totalUniqueCards}/${CARD_LIBRARY.length}`, label: 'карточек' },
+          { icon: '/common/completed.png', value: completions.length, label: 'задач' },
+          { icon: '/sidebar/fight.png', value: boss.hp === 0 ? 1 : 0, label: 'боссов' },
+          { icon: '/sidebar/collections.png', value: `${totalUniqueCards}/${CARD_LIBRARY.length}`, label: 'карточек' },
         ].map((item) => (
           <div key={item.label} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 text-center shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
-            <div className="text-3xl mb-1">{item.icon}</div>
+            <div className="text-3xl mb-1"><img src={item.icon} alt="" className="inline-block w-7 h-7" /></div>
             <div className="font-['DM_Serif_Display'] text-[40px] leading-none text-[var(--text-primary)]">{item.value}</div>
             <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-[var(--text-tertiary)]">{item.label}</div>
           </div>
@@ -100,7 +101,7 @@ export const StatsPage = () => {
                 <div className="mb-1 flex items-center justify-between text-sm font-medium">
                   <span className="flex items-center gap-2">
                     <span className="font-['DM_Serif_Display'] text-lg">{['🥇', '🥈', '🥉'][index] || `${index + 1}.`}</span>
-                    <span>{member.avatar} {member.name}</span>
+                    <span className="flex items-center gap-1"><MemberAvatar avatar={member.avatar} className="w-5 h-5 rounded-full bg-[var(--bg-elevated)] text-sm" /> {member.name}</span>
                   </span>
                   <span className="text-[var(--text-secondary)]">{member.xp} XP</span>
                 </div>
@@ -117,7 +118,7 @@ export const StatsPage = () => {
             {categoryStats.map((item) => (
               <div key={item.key}>
                 <div className="mb-1 flex items-center justify-between text-sm font-medium">
-                  <span>{item.category.icon} {item.category.label}</span>
+                  <span><img src={item.category.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {item.category.label}</span>
                   <span className="text-[var(--text-secondary)]">{item.total}</span>
                 </div>
                 <ProgressBar value={(item.total / maxCategory) * 100} height={6} />
@@ -133,7 +134,7 @@ export const StatsPage = () => {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {achievements.map((achievement) => (
             <div key={achievement.title} className={`rounded-[var(--r-md)] p-4 text-center ${achievement.done ? 'bg-[var(--bg-surface)] shadow-[var(--shadow-card)] border border-[var(--border-soft)]' : achievement.secret ? 'bg-[var(--bg-elevated)]' : 'bg-[var(--bg-elevated)] opacity-60'}`}>
-              <div className="mb-2 text-3xl">{achievement.secret ? '🔮' : achievement.icon}</div>
+              <div className="mb-2 text-3xl">{achievement.secret ? '🔮' : achievement.icon.endsWith('.png') ? <img src={achievement.icon} alt="" className="inline-block w-8 h-8" /> : achievement.icon}</div>
               <div className={`text-sm font-medium ${achievement.secret ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)]'}`}>{achievement.title}</div>
               <div className={`mt-1 text-xs font-medium ${achievement.done ? 'text-[var(--sage)]' : achievement.secret ? 'text-[var(--text-tertiary)]' : 'text-[var(--text-tertiary)]'}`}>
                 {achievement.done ? '✓ выполнено' : 'закрыто'}

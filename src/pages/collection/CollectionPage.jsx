@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CARD_LIBRARY, RARITIES, STAR_LEVELS, UPGRADE_COSTS } from '@/shared/data/cardData';
 import { CATEGORIES } from '@/shared/data/taskTemplates';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { SegmentedControl } from '@/shared/ui/SegmentedControl';
@@ -119,7 +120,7 @@ export const CollectionPage = () => {
                   : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
-              <span className="text-xl">{member.avatar}</span>
+              <MemberAvatar avatar={member.avatar} className="h-7 w-7 rounded-full bg-[var(--bg-elevated)] text-xl" />
               <span className="text-sm font-medium">{member.name}</span>
               <span className="text-xs opacity-60">({memberColl.length})</span>
             </button>
@@ -294,7 +295,7 @@ export const CollectionPage = () => {
 
                 <div className="mt-3 text-center">
                   <span className="text-sm font-medium text-[var(--slate)]">
-                    {CATEGORIES[selectedCard.category]?.icon} {CATEGORIES[selectedCard.category]?.label}
+                    <img src={CATEGORIES[selectedCard.category]?.iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> {CATEGORIES[selectedCard.category]?.label}
                   </span>
                 </div>
 

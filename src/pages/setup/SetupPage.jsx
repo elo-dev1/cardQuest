@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
 import { AVATARS, HERO_CLASSES } from '@/shared/data/memberData';
+import { AvatarPicker } from '@/shared/ui/AvatarPicker';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useAuth } from '@/features/auth/model/useAuth';
 import { useStore } from '@/shared/store/useStore';
 import { fireConfetti } from '@/shared/lib/confetti';
@@ -14,7 +16,7 @@ const classEntries = Object.entries(HERO_CLASSES);
 const emptyChild = () => ({
   name: '',
   avatar: AVATARS[2],
-  classId: 'archer',
+  classId: 'warrior',
   pin: '',
 });
 
@@ -145,22 +147,8 @@ export const SetupPage = () => {
               autoFocus
             />
 
-            <div className="mb-5">
-              <div className="mb-2 text-sm font-medium text-[var(--text-primary)]">Аватар</div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {AVATARS.map((avatar) => (
-                  <button
-                    type="button"
-                    key={avatar}
-                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl transition ${
-                      hero.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-elevated)]'
-                    }`}
-                    onClick={() => setHero((current) => ({ ...current, avatar }))}
-                  >
-                    {avatar}
-                  </button>
-                ))}
-              </div>
+            <div className="mb-7">
+              <AvatarPicker value={hero.avatar} onChange={(avatar) => setHero((current) => ({ ...current, avatar }))} />
             </div>
 
             <div className="mb-7 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -175,7 +163,7 @@ export const SetupPage = () => {
                   }`}
                   onClick={() => setHero((current) => ({ ...current, classId: key }))}
                 >
-                  <div className="text-xl">{heroClass.icon}</div>
+                  <div className="flex items-center justify-center h-7 w-7">{heroClass.iconSrc ? <img src={heroClass.iconSrc} alt="" className="w-5 h-5" /> : <span className="text-xl">{heroClass.icon}</span>}</div>
                   <div className="text-sm font-semibold">{heroClass.label}</div>
                   <div className="text-xs font-medium text-[var(--text-secondary)]">Бонус: {heroClass.bonus}</div>
                 </button>
@@ -224,19 +212,8 @@ export const SetupPage = () => {
                 onChange={(event) => setChildDraft((current) => ({ ...current, name: event.target.value }))}
                 placeholder="Имя ребёнка"
               />
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {AVATARS.map((avatar) => (
-                  <button
-                    type="button"
-                    key={avatar}
-                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg transition ${
-                      childDraft.avatar === avatar ? 'bg-[var(--charcoal)] text-white' : 'bg-[var(--bg-surface)]'
-                    }`}
-                    onClick={() => setChildDraft((current) => ({ ...current, avatar }))}
-                  >
-                    {avatar}
-                  </button>
-                ))}
+              <div className="mb-6">
+                <AvatarPicker value={childDraft.avatar} onChange={(avatar) => setChildDraft((current) => ({ ...current, avatar }))} />
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {classEntries.map(([key, heroClass]) => (
@@ -248,7 +225,7 @@ export const SetupPage = () => {
                     }`}
                     onClick={() => setChildDraft((current) => ({ ...current, classId: key }))}
                   >
-                    <div className="text-xl">{heroClass.icon}</div>
+                  <div className="flex items-center justify-center h-7 w-7">{heroClass.iconSrc ? <img src={heroClass.iconSrc} alt="" className="w-5 h-5" /> : <span className="text-xl">{heroClass.icon}</span>}</div>
                     <div className="text-sm font-semibold">{heroClass.label}</div>
                   </button>
                 ))}
@@ -271,11 +248,11 @@ export const SetupPage = () => {
                 {children.map((child) => (
                   <div key={child.id} className="flex items-center justify-between rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{child.avatar}</span>
+                      <MemberAvatar avatar={child.avatar} className="h-10 w-10 rounded-full bg-[var(--bg-surface)] text-2xl" />
                       <div>
                         <div className="font-semibold">{child.name}</div>
                         <div className="text-xs font-medium text-[var(--text-secondary)]">
-                          {HERO_CLASSES[child.classId]?.icon} {HERO_CLASSES[child.classId]?.label}
+                          {HERO_CLASSES[child.classId]?.iconSrc ? <img src={HERO_CLASSES[child.classId].iconSrc} alt="" className="inline-block w-4 h-4 align-text-bottom" /> : HERO_CLASSES[child.classId]?.icon} {HERO_CLASSES[child.classId]?.label}
                         </div>
                       </div>
                     </div>

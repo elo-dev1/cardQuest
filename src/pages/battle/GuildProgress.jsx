@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
 import { todayKey } from '@/shared/lib/date';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
@@ -27,7 +28,7 @@ export const GuildProgress = () => {
           <div key={member.id}>
             <div className="mb-1 flex items-center justify-between text-sm font-medium">
               <span className="flex items-center gap-2">
-                <span>{member.avatar}</span>
+                <MemberAvatar avatar={member.avatar} className="w-5 h-5 rounded-full bg-[var(--bg-elevated)] text-sm" />
                 <span className="text-[var(--text-primary)]">{member.name}</span>
               </span>
               <div className="flex items-center gap-2">
