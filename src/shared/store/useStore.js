@@ -15,6 +15,7 @@ import { normalizeReward, getRewardForTask } from '@/entities/task/model/rewardL
 import { normalizeCollectionItem, normalizeMemberCollections } from '@/entities/collection/model/collectionLogic';
 import { normalizeExchange } from '@/entities/exchange/model/exchangeLogic';
 import { defaultBoss, normalizeBoss, calculateBossDamage, getBossDeckForMember, DIFFICULTY_DAMAGE } from '@/entities/boss/model/bossLogic';
+import { REAL_REWARDS, REWARD_CATEGORIES } from '@/shared/data/realRewards';
 
 const STORAGE_KEY = 'card-quest-state-v1';
 const CURRENT_MEMBER_KEY = 'card-quest-current-member-id';
@@ -45,11 +46,24 @@ const baseState = {
   bossDeck: [],
   guildPoints: 100,
   theme: 'dark',
+  purchasedRewards: [],
+  lastTaskCompletedAt: null,
+  lastBossIdleAttackAt: null,
 };
 
 const canUseStorage = () => typeof window !== 'undefined' && window.localStorage;
 
 const safeArray = (value) => (Array.isArray(value) ? value : []);
+
+const deriveLastTaskCompleted = (completions) => {
+  const timestamps = completions
+    .filter((c) => c.completed_at)
+    .map((c) => new Date(c.completed_at).getTime())
+    .filter((t) => !isNaN(t));
+  if (timestamps.length) return Math.max(...timestamps);
+
+  return completions.length > 0 ? Date.now() : null;
+};
 
 const normalizeState = (state) => {
   const members = safeArray(state.members).map(normalizeMember);
@@ -79,6 +93,9 @@ const normalizeState = (state) => {
     boss: { ...defaultBoss, ...(state.boss || {}) },
     bossDeck: state.bossDeck || [],
     guildPoints: state.guildPoints ?? 100,
+    purchasedRewards: safeArray(state.purchasedRewards),
+    lastTaskCompletedAt: state.lastTaskCompletedAt ?? deriveLastTaskCompleted(safeArray(state.completions)),
+    lastBossIdleAttackAt: state.lastBossIdleAttackAt ?? null,
     toasts: [],
     isLoading: false,
     isSetupDone: Boolean(state.family),
@@ -142,10 +159,6 @@ const runRemote = (promise, get, label = 'Supabase sync') => {
 
 const familyPatchToDb = (patch) => {
   const dbPatch = { ...patch };
-  if ('gems' in dbPatch) {
-    dbPatch.crystals = dbPatch.gems;
-    delete dbPatch.gems;
-  }
   if ('ownedEffects' in dbPatch) {
     dbPatch.owned_effects = dbPatch.ownedEffects;
     delete dbPatch.ownedEffects;
@@ -355,6 +368,12 @@ export const useStore = create((set, get) => ({
           .eq('family_id', family.id)
           .order('created_at', { ascending: false });
 
+      const { data: purchasedRewardsData } = await supabase
+        .from('purchased_rewards')
+        .select('*')
+        .eq('family_id', family.id)
+        .order('purchased_at', { ascending: false });
+
       const normalized = normalizeState({
         authUserId: userId,
         family,
@@ -365,6 +384,7 @@ export const useStore = create((set, get) => ({
         memberCollections: memberCollectionsMap,
         currentCollectionMember: selectedMember?.id,
         exchanges: exchangesData,
+        purchasedRewards: purchasedRewardsData,
         boss: normalizeBoss(bossWeek, bossDamage, guildPoints, todayKey(), savedLogs),
         guildPoints,
         bossDeck: finalBossDeck,
@@ -397,7 +417,7 @@ export const useStore = create((set, get) => ({
 
       const { data: family, error: familyError } = await supabase
         .from('families')
-        .insert({ name: familyName, owner_id: supabaseUserId, coins: 1250, crystals: 45 })
+        .insert({ name: familyName, owner_id: supabaseUserId, coins: 1250 })
         .select('*')
         .single();
       if (familyError) throw familyError;
@@ -488,8 +508,6 @@ export const useStore = create((set, get) => ({
       owner_id: userId,
       name: familyName,
       coins: 1250,
-      gems: 45,
-      crystals: 45,
       guild_level: 1,
       guild_xp: 0,
       dailyBonusClaimedAt: null,
@@ -762,6 +780,8 @@ export const useStore = create((set, get) => ({
         members,
         family,
         boss: newBoss,
+        lastTaskCompletedAt: Date.now(),
+        lastBossIdleAttackAt: null,
       };
     });
 
@@ -1269,6 +1289,95 @@ export const useStore = create((set, get) => ({
       }
     }
     return activeBoosts;
+  },
+
+  buyReward: (rewardId) => {
+    const state = get();
+    const reward = REAL_REWARDS.find((r) => r.id === rewardId);
+    if (!reward) return { ok: false, reason: 'not_found' };
+
+    const cat = REWARD_CATEGORIES.find((c) => c.value === reward.category);
+    const cooldownMs = cat?.cooldownDays ? cat.cooldownDays * 24 * 60 * 60 * 1000 : 0;
+    const lastPurchase = state.purchasedRewards
+      .filter((r) => r.reward_id === rewardId && r.status === 'purchased')
+      .sort((a, b) => new Date(b.purchased_at) - new Date(a.purchased_at))[0];
+
+    if (lastPurchase && cooldownMs > 0) {
+      const elapsed = Date.now() - new Date(lastPurchase.purchased_at).getTime();
+      if (elapsed < cooldownMs) {
+        const remainingMs = cooldownMs - elapsed;
+        const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
+        return { ok: false, reason: 'cooldown', remainingHours, cooldownDays: cat.cooldownDays };
+      }
+    }
+
+    const member = state.getCurrentMember();
+    if (!member) return { ok: false, reason: 'no_member' };
+
+    const notifyOthers = () => {
+      const currentState = get();
+      const buyerName = currentState.getCurrentMember()?.name || 'Кто-то';
+      if (currentState.family?.id) {
+        fetch('/api/notify-reward', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'notify',
+            familyId: currentState.family.id,
+            rewardName: reward.name,
+            buyerName,
+            excludeMemberId: currentState.getCurrentMember()?.id,
+          }),
+        }).catch(() => {});
+      }
+    };
+
+    if (reward.price < 0) {
+      const earned = Math.abs(reward.price);
+      const coins = (state.family?.coins ?? 0) + earned;
+      commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
+      const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
+      commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
+      if (isSupabaseConfigured && state.family?.id) {
+        supabase.from('purchased_rewards').insert({
+          id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
+        }).then(({ error }) => { if (error) console.error('buyReward sync:', error); });
+      }
+      notifyOthers();
+      return { ok: true, earned };
+    }
+
+    if (reward.price === 0) {
+      const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
+      commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
+      if (isSupabaseConfigured && state.family?.id) {
+        supabase.from('purchased_rewards').insert({
+          id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
+        }).then(({ error }) => { if (error) console.error('buyReward sync:', error); });
+      }
+      notifyOthers();
+      return { ok: true, free: true };
+    }
+
+    if ((state.family?.coins ?? 0) < reward.price) return { ok: false, reason: 'insufficient_coins' };
+
+    const coins = state.family.coins - reward.price;
+    commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
+
+    const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
+    commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
+
+    if (isSupabaseConfigured && state.family?.id) {
+      supabase.from('purchased_rewards').insert({
+        id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
+      }).then(({ error }) => { if (error) console.error('buyReward sync:', error); });
+
+      supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => {
+        if (error) console.error('buyReward coins sync:', error);
+      });
+    }
+    notifyOthers();
+    return { ok: true, spent: reward.price };
   },
 
   getBoostMultiplier: (boostType) => {
@@ -1826,17 +1935,16 @@ export const useStore = create((set, get) => ({
   },
 
   triggerBossAttack: (penalty) => {
-    const { guildPoints, boss, family } = get();
-    const newPoints = Math.max(0, guildPoints - penalty);
-    const newHp = boss.phase === 2 ? Math.min(boss.maxHp, boss.hp + 50) : boss.hp;
+    const { boss, family } = get();
+    const healAmount = penalty * 2;
+    const newHp = Math.min(boss.maxHp, boss.hp + healAmount);
     commit(set, get, (state) => ({
       ...state,
-      guildPoints: newPoints,
       boss: { ...state.boss, hp: newHp },
     }));
-    const logText = `🐲 Гильдия была неактивна! Дракон атакует → -${penalty} очков`;
+    const logText = `🐲 Семья не выполняла задачи более 4 часов! Дракон восстанавливает +${healAmount} HP`;
     get().addBossLog(logText, 'attack');
-    get().addToast(`🐲 Дракон атакует гильдию! -${penalty} очков`, 'boss_attack');
+    get().addToast(`🐲 Семья бездействовала 4+ часов! Дракон восстановил +${healAmount} HP!`, 'boss_attack');
 
     if (isSupabaseConfigured && family?.id) {
       supabase
@@ -1847,9 +1955,7 @@ export const useStore = create((set, get) => ({
         .maybeSingle()
         .then(({ data: bw }) => {
           if (!bw) return;
-          const updates = { guild_points: newPoints };
-          if (boss.phase === 2) updates.boss_hp_cur = newHp;
-          supabase.from('boss_weeks').update(updates).eq('id', bw.id).then(({ error }) => {
+          supabase.from('boss_weeks').update({ boss_hp_cur: newHp }).eq('id', bw.id).then(({ error }) => {
             if (error) console.error('triggerBossAttack sync:', error);
           });
         });
@@ -1903,20 +2009,16 @@ export const useStore = create((set, get) => ({
   },
 
   checkBossAttackNeeded: () => {
-    const { members, tasks, completions } = get();
-    if (!members.length || !tasks.length) return;
+    const { lastTaskCompletedAt, lastBossIdleAttackAt } = get();
+    if (lastBossIdleAttackAt !== null || lastTaskCompletedAt === null) return;
 
-    const yesterday = lastDays(1)[0];
-    const totalTasks = tasks.length;
-    const completedYesterday = completions.filter((c) => c.date === yesterday).length;
-    const completionRate = totalTasks > 0 ? completedYesterday / totalTasks : 0;
-
-    if (completionRate < 0.3 && completionRate >= 0.1) {
+    const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
+    if (Date.now() - lastTaskCompletedAt >= FOUR_HOURS_MS) {
       get().triggerBossAttack(15);
-    } else if (completionRate < 0.1) {
-      get().triggerBossAttack(25);
-    } else if (completionRate < 0.5) {
-      get().triggerBossAttack(5);
+      commit(set, get, (state) => ({
+        ...state,
+        lastBossIdleAttackAt: Date.now(),
+      }));
     }
   },
 
