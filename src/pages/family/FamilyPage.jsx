@@ -1,17 +1,36 @@
 import { useState } from 'react';
+import { format, parseISO, addDays } from 'date-fns';
 import { HERO_CLASSES } from '@/shared/data/memberData';
 import { useStore } from '@/shared/store/useStore';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { BACKGROUND_TYPES } from '@/shared/data/shopItems';
+import { REAL_REWARDS, REWARD_CATEGORIES } from '@/shared/data/realRewards';
 
 export const FamilyPage = () => {
   const family = useStore((state) => state.family);
   const members = useStore((state) => state.members);
   const getMemberProgress = useStore((state) => state.getMemberProgress);
+  const purchasedRewards = useStore((state) => state.purchasedRewards);
   const addToast = useStore((state) => state.addToast);
   const activeBg = BACKGROUND_TYPES.find((bg) => bg.id === family?.activeBackground);
   const [expandedMemberId, setExpandedMemberId] = useState(null);
+
+  const getMemberRewards = (memberId) =>
+    purchasedRewards
+      .filter((pr) => pr.purchased_by === memberId)
+      .map((pr) => {
+        const reward = REAL_REWARDS.find((r) => r.id === pr.reward_id);
+        const cat = REWARD_CATEGORIES.find((c) => c.value === reward?.category);
+        const cooldownDays = cat?.cooldownDays;
+        return {
+          ...pr,
+          reward,
+          endDate: cooldownDays ? addDays(parseISO(pr.purchased_at), cooldownDays) : parseISO(pr.purchased_at),
+          hasCooldown: !!cooldownDays,
+        };
+      })
+      .filter((pr) => pr.reward);
 
   const podium = members.slice().sort((a, b) => b.xp - a.xp);
   const [second, first, third] = [podium[1], podium[0], podium[2]];
@@ -87,8 +106,24 @@ export const FamilyPage = () => {
               </div>
               <div className={`member-card-details w-full ${isExpanded ? 'open' : ''}`}>
                 <div className="pt-3 text-sm font-medium text-[var(--text-secondary)]">Сегодня: {progress.completed}/{progress.total}</div>
+                {(() => {
+                  const memberRewards = getMemberRewards(member.id);
+                  return memberRewards.length > 0 ? (
+                    <div className="pt-3">
+                      <div className="mb-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">Купленные награды</div>
+                      <div className="space-y-2">
+                        {memberRewards.map((pr) => (
+                          <div key={pr.id} className="flex items-center gap-2 text-sm">
+                            <span>{pr.reward.emoji}</span>
+                            <span className="text-[var(--text-primary)]">{pr.reward.name}</span>
+                            <span className="ml-auto text-[var(--text-tertiary)]">{pr.hasCooldown ? `до ${format(pr.endDate, 'dd.MM.yyyy')}` : format(pr.endDate, 'dd.MM.yyyy')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
-              <div className="text-sm font-medium text-[var(--text-secondary)] md:block hidden">Сегодня: {progress.completed}/{progress.total}</div>
               <button type="button" className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-elevated)] text-xl font-medium text-[var(--text-tertiary)]">
                 ⋮
               </button>

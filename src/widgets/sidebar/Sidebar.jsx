@@ -1,9 +1,9 @@
-import { NavLink } from "react-router-dom";
-import { ProgressBar } from "@/shared/ui/ProgressBar";
-import { ThemeToggle } from "@/shared/ui/ThemeToggle";
-import { MemberAvatar } from "@/shared/ui/MemberAvatar";
-import { HERO_CLASSES } from "@/shared/data/memberData";
-import { useStore } from "@/shared/store/useStore";
+import { NavLink } from 'react-router-dom';
+import { ProgressBar } from '@/shared/ui/ProgressBar';
+import { ThemeToggle } from '@/shared/ui/ThemeToggle';
+import { MemberAvatar } from '@/shared/ui/MemberAvatar';
+import { HERO_CLASSES } from '@/shared/data/memberData';
+import { useStore } from '@/shared/store/useStore';
 
 const navItems = [
   { to: "/home", label: "Главная", iconSrc: "/sidebar/home.png" },
@@ -32,7 +32,7 @@ export const Sidebar = () => {
         <button
           type="button"
           className="mb-5 w-full rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-left transition hover:bg-[var(--bg-surface)]"
-          title="Сменить участника"
+          title="Профиль"
         >
           <div className="flex items-center gap-3">
             <MemberAvatar avatar={member.avatar} className="h-9 w-9 rounded-full bg-[var(--bg-surface)] text-xl" />
@@ -78,7 +78,6 @@ export const Sidebar = () => {
 
       <div className="mb-3 flex items-center justify-between rounded-full bg-[var(--bg-elevated)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)]">
         <span><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {family?.coins ?? 0}</span>
-        <span>💎 {family?.gems ?? 0}</span>
       </div>
 
       <ThemeToggle />

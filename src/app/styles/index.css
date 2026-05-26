@@ -1468,7 +1468,7 @@ html.dark .tab-item.active::after {
   transition: max-height 300ms ease;
 }
 .member-card-details.open {
-  max-height: 200px;
+  max-height: 500px;
 }
 
 /* Podium mobile */

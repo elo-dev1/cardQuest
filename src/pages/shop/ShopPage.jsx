@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PACK_TYPES, SHOP_ITEMS, EFFECT_TYPES, BACKGROUND_TYPES, BOOST_TYPES } from '@/shared/data/shopItems';
+import { REAL_REWARDS, REWARD_CATEGORIES } from '@/shared/data/realRewards';
 import { useStore } from '@/shared/store/useStore';
 import { SegmentedControl } from '@/shared/ui/SegmentedControl';
 
@@ -13,8 +14,12 @@ export const ShopPage = () => {
   const setActiveBackground = useStore((state) => state.setActiveBackground);
   const buyBoost = useStore((state) => state.buyBoost);
   const isBoostActive = useStore((state) => state.isBoostActive);
+  const buyReward = useStore((state) => state.buyReward);
   const addToast = useStore((state) => state.addToast);
+  const purchasedRewards = useStore((state) => state.purchasedRewards);
+  const member = useStore((state) => state.getCurrentMember());
   const [tab, setTab] = useState('packs');
+  const [rewardCategory, setRewardCategory] = useState('time');
 
   const buyPack = (pack) => {
     if (!spendCoins(pack.price_coins)) {
@@ -75,13 +80,87 @@ export const ShopPage = () => {
     }
   };
 
+  const formatTimeLeft = (ms) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours >= 24) {
+      const days = Math.floor(hours / 24);
+      return `${days}д ${hours % 24}ч`;
+    }
+    return hours > 0 ? `${hours}ч ${minutes}м` : `${minutes}м`;
+  };
+
+  const cooldownMap = useMemo(() => {
+    const map = {};
+    const now = Date.now();
+    for (const r of REAL_REWARDS) {
+      const cat = REWARD_CATEGORIES.find((c) => c.value === r.category);
+      const cooldownDays = cat?.cooldownDays;
+      if (!cooldownDays) {
+        const hasAny = purchasedRewards.some((pr) => pr.reward_id === r.id && pr.status === 'purchased');
+        if (hasAny) map[r.id] = { onCooldown: true, timeLeft: null };
+        continue;
+      }
+      const cooldownMs = cooldownDays * 24 * 60 * 60 * 1000;
+      const lastPurchase = purchasedRewards
+        .filter((pr) => pr.reward_id === r.id && pr.status === 'purchased')
+        .sort((a, b) => new Date(b.purchased_at) - new Date(a.purchased_at))[0];
+      if (lastPurchase) {
+        const elapsed = now - new Date(lastPurchase.purchased_at).getTime();
+        if (elapsed < cooldownMs) {
+          const left = cooldownMs - elapsed;
+          map[r.id] = { onCooldown: true, timeLeft: left };
+        }
+      }
+    }
+    return map;
+  }, [purchasedRewards]);
+
+  const filteredRewards = useMemo(() => {
+    return REAL_REWARDS.filter((r) => {
+      if (r.category !== rewardCategory) return false;
+      if (r.for_role === 'child' && member?.role !== 'child') return false;
+      if (r.for_role === 'parent' && member?.role !== 'parent') return false;
+      return true;
+    });
+  }, [rewardCategory, member]);
+
+  const handleBuyReward = (reward) => {
+    const cd = cooldownMap[reward.id];
+    if (cd && cd.onCooldown) {
+      if (cd.timeLeft !== null) {
+        addToast(`Награду можно снова купить через ${formatTimeLeft(cd.timeLeft)}`, 'info');
+      } else {
+        addToast(`Награда «${reward.name}» уже куплена`, 'info');
+      }
+      return;
+    }
+
+    const result = buyReward(reward.id);
+    if (!result.ok) {
+      if (result.reason === 'insufficient_coins') {
+        addToast('Недостаточно монет!', 'error');
+      } else if (result.reason === 'cooldown') {
+        addToast(`Награду можно снова купить через ${result.remainingHours}ч`, 'info');
+      }
+      return;
+    }
+
+    if (result.earned) {
+      addToast(`💼 Задание «${reward.name}» — заработано +${result.earned} монет`, 'success');
+    } else if (result.free) {
+      addToast(`⭐ Награда «${reward.name}» активирована!`, 'success');
+    } else {
+      addToast(`🎁 Награда «${reward.name}» куплена!`, 'success');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <header className="text-center">
         <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">Магазин гильдии</h1>
         <div className="mt-2 flex justify-center gap-2">
           <span className="pill"><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {family?.coins || 0} монет</span>
-          <span className="pill">💎 {family?.gems || 0} кристаллов</span>
         </div>
       </header>
 
@@ -94,6 +173,7 @@ export const ShopPage = () => {
           { value: 'effects', label: 'Эффекты' },
           { value: 'backgrounds', label: 'Фоны' },
           { value: 'boosts', label: 'Бусты' },
+          { value: 'rewards', label: '🎁 Награды' },
         ]}
       />
 
@@ -242,6 +322,54 @@ export const ShopPage = () => {
             );
           })}
         </section>
+      ) : null}
+
+      {tab === 'rewards' ? (
+        <div className="space-y-5">
+          <SegmentedControl
+            options={REWARD_CATEGORIES}
+            value={rewardCategory}
+            onChange={setRewardCategory}
+            className="flex-nowrap overflow-x-auto"
+          />
+          <section className="space-y-2">
+            {filteredRewards.map((reward) => {
+              const cd = cooldownMap[reward.id];
+              const onCooldown = cd?.onCooldown;
+              return (
+                <div
+                  key={reward.id}
+                  className={`flex items-center gap-3 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border ${onCooldown ? 'border-[var(--sage)] opacity-60' : 'border-[var(--border-soft)]'}`}
+                >
+                  <span className="text-2xl">{reward.emoji}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-[var(--text-primary)]">{reward.name}</div>
+                    <div className="text-xs font-medium text-[var(--text-secondary)] leading-snug">{reward.description}</div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap ${onCooldown ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-default' : 'btn-primary'}`}
+                    onClick={() => handleBuyReward(reward)}
+                    disabled={onCooldown}
+                  >
+                    {onCooldown && cd.timeLeft !== null
+                      ? formatTimeLeft(cd.timeLeft)
+                      : onCooldown
+                        ? 'Куплено ✓'
+                        : reward.price < 0
+                          ? `+${Math.abs(reward.price)}💰`
+                          : reward.price === 0
+                            ? 'Бесплатно'
+                            : `${reward.price}💰`}
+                  </button>
+                </div>
+              );
+            })}
+            {filteredRewards.length === 0 && (
+              <p className="py-12 text-center text-sm font-medium text-[var(--text-tertiary)]">Нет наград в этой категории</p>
+            )}
+          </section>
+        </div>
       ) : null}
     </div>
   );
