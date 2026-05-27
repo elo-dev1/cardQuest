@@ -13,6 +13,10 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
   const addToast = useStore((state) => state.addToast);
   const getExchangesCountToday = useStore((state) => state.getExchangesCountToday);
 
+  const currentMember = useMemo(
+    () => members.find((m) => m.id === currentMemberId),
+    [members, currentMemberId]
+  );
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [selectedOfferedCard, setSelectedOfferedCard] = useState(offeredCard);
   const [selectedRequestedCard, setSelectedRequestedCard] = useState(null);
@@ -111,6 +115,11 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
               ×
             </button>
           </div>
+          {currentMember && currentMember.level < 7 && (
+            <div className="mb-4 rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-center text-sm font-medium text-[var(--text-tertiary)]">
+              🔒 Для обмена картами нужен 7 уровень персонажа
+            </div>
+          )}
 
           <div className="mb-4">
             <div className="mb-2 flex items-center gap-2">
@@ -120,24 +129,31 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
 
             {step >= 1 && (
               <div className="grid grid-cols-2 gap-2">
-                {otherMembers.map((member) => (
-                  <button
-                    key={member.id}
-                    type="button"
-                    onClick={() => { setSelectedRecipient(member); setStep(2); }}
-                    className={`flex items-center gap-2 rounded-[var(--r-sm)] border-2 p-2 transition ${
-                      selectedRecipient?.id === member.id
-                        ? 'border-[var(--charcoal)] bg-[var(--bg-elevated)]'
-                        : 'border-[var(--border-soft)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
-                    }`}
-                  >
-                    <MemberAvatar avatar={member.avatar} className="h-8 w-8 rounded-full bg-[var(--bg-elevated)] text-xl" />
-                    <div className="text-left">
-                      <div className="text-sm font-semibold text-[var(--text-primary)]">{member.name}</div>
-                      <div className="text-xs font-medium text-[var(--text-tertiary)]">{member.role === 'child' ? 'Ребёнок' : 'Взрослый'}</div>
-                    </div>
-                  </button>
-                ))}
+                {otherMembers.map((member) => {
+                  const levelLocked = member.level < 7;
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => { if (!levelLocked) { setSelectedRecipient(member); setStep(2); } }}
+                      className={`flex items-center gap-2 rounded-[var(--r-sm)] border-2 p-2 transition ${
+                        levelLocked
+                          ? 'border-[var(--border-soft)] bg-[var(--bg-surface)] opacity-50'
+                          : selectedRecipient?.id === member.id
+                            ? 'border-[var(--charcoal)] bg-[var(--bg-elevated)]'
+                            : 'border-[var(--border-soft)] bg-[var(--bg-surface)] hover:border-[var(--border-medium)]'
+                      }`}
+                    >
+                      <MemberAvatar avatar={member.avatar} className="h-8 w-8 rounded-full bg-[var(--bg-elevated)] text-xl" />
+                      <div className="text-left">
+                        <div className="text-sm font-semibold text-[var(--text-primary)]">{member.name}</div>
+                        <div className="text-xs font-medium text-[var(--text-tertiary)]">
+                          {levelLocked ? '🔒 ур. 7' : `ур. ${member.level} · ${member.role === 'child' ? 'Ребёнок' : 'Взрослый'}`}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

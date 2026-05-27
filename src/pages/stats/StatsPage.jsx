@@ -24,6 +24,7 @@ export const StatsPage = () => {
   const completions = useStore((state) => state.completions);
   const memberCollections = useStore((state) => state.memberCollections);
   const boss = useStore((state) => state.boss);
+  const defeatedBosses = useStore((state) => state.defeatedBosses);
   const getStreak = useStore((state) => state.getStreak);
   const getFamilyProgress = useStore((state) => state.getFamilyProgress);
   const days = lastDays(7);
@@ -57,7 +58,7 @@ export const StatsPage = () => {
       <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {[
           { icon: '/common/completed.png', value: completions.length, label: 'задач' },
-          { icon: '/sidebar/fight.png', value: boss.hp === 0 ? 1 : 0, label: 'боссов' },
+          { icon: '/sidebar/fight.png', value: defeatedBosses.length, label: 'боссов' },
           { icon: '/sidebar/collections.png', value: `${totalUniqueCards}/${CARD_LIBRARY.length}`, label: 'карточек' },
         ].map((item) => (
           <div key={item.label} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 text-center shadow-[var(--shadow-card)] border border-[var(--border-soft)]">

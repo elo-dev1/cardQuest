@@ -119,7 +119,7 @@ export const VictoryScreen = ({ bossName, reward = 250, onClose }) => {
   );
 };
 
-export const DefeatScreen = ({ bossName, onClose }) => {
+export const DefeatScreen = ({ bossName, bossEmoji = '🐲', onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => onClose?.(), 5000);
     return () => clearTimeout(timer);
@@ -140,7 +140,7 @@ export const DefeatScreen = ({ bossName, onClose }) => {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="mb-6 text-[100px] opacity-40 grayscale">🐲</div>
+        <div className="mb-6 text-[100px] opacity-40 grayscale">{bossEmoji}</div>
 
         <h1
           className="mb-4 text-center text-4xl font-['DM_Serif_Display']"

@@ -2,6 +2,7 @@ import { todayKey } from '@/shared/lib/date';
 import { getActiveSynergies } from '@/shared/data/synergies';
 import { getStreakCalc } from '@/entities/family/model/familyLogic';
 import { CARD_LIBRARY } from '@/shared/data/cardData';
+import { getRandomBossConfig, getBossConfigByName } from './bossConfig';
 
 export const DIFFICULTY_DAMAGE = {
   easy: 10,
@@ -9,24 +10,37 @@ export const DIFFICULTY_DAMAGE = {
   hard: 40,
 };
 
-export const defaultBoss = {
-  name: 'Дракон Лени',
-  emoji: '🐲',
-  subtitle: 'Повелитель прокрастинации',
-  maxHp: 1000,
-  hp: 1000,
-  weakness: 'activity',
-  daysLeft: 3,
-  phase: 1,
-  logs: [
-    { id: 'log-init', text: 'Дракон Лени появился над городом! Гильдия, к бою!', at: Date.now(), type: 'phase' },
-  ],
-  damageByMember: {},
-  damageByMemberToday: {},
+const makeDefaultBoss = () => {
+  const cfg = getRandomBossConfig();
+  return {
+    id: null,
+    name: cfg.name,
+    emoji: cfg.emoji,
+    subtitle: cfg.subtitle,
+    maxHp: cfg.hp,
+    hp: cfg.hp,
+    weakness: cfg.weakness,
+    daysLeft: 3,
+    phase: 1,
+    imageKey: cfg.imageKey,
+    logs: [
+      { id: 'log-init', text: `${cfg.name} появился над городом! Гильдия, к бою!`, at: Date.now(), type: 'phase' },
+    ],
+    damageByMember: {},
+    damageByMemberToday: {},
+  };
 };
 
+export let defaultBoss = makeDefaultBoss();
+
+export const createDefaultBoss = makeDefaultBoss;
+
 export const normalizeBoss = (bossWeek, damageRows = [], guildPoints = 100, todayKeyStr = todayKey(), existingLogs = null) => {
-   if (!bossWeek) return defaultBoss;
+   if (!bossWeek) return makeDefaultBoss();
+
+   const bossName = bossWeek.boss_name ?? defaultBoss.name;
+   const bossConfig = getBossConfigByName(bossName);
+   const isWon = bossWeek.is_won ?? false;
 
    const damageByMember = (Array.isArray(damageRows) ? damageRows : []).reduce((acc, row) => {
      acc[row.member_id] = (acc[row.member_id] ?? 0) + (row.damage ?? 0);
@@ -42,28 +56,30 @@ export const normalizeBoss = (bossWeek, damageRows = [], guildPoints = 100, toda
 
    const weekEnd = bossWeek.week_end ? new Date(bossWeek.week_end) : null;
    const daysLeft = weekEnd ? Math.max(0, Math.ceil((weekEnd - new Date()) / 86400000)) : defaultBoss.daysLeft;
-   const hp = bossWeek.boss_hp_cur ?? defaultBoss.hp;
    const maxHp = bossWeek.boss_hp_max ?? defaultBoss.maxHp;
+   const hp = isWon ? 0 : (bossWeek.boss_hp_cur ?? defaultBoss.hp);
    const phase = hp <= maxHp / 2 ? 2 : 1;
 
    const logs = existingLogs && existingLogs.length > 0
      ? existingLogs
-     : [
-         { id: `boss-${bossWeek.id}`, text: `⚔️ Битва с "${bossWeek.boss_name ?? defaultBoss.name}" активна`, at: Date.now(), type: 'info' },
-       ];
+     : isWon
+       ? [{ id: `boss-${bossWeek.id}-won`, text: `🏆 ${bossName} побеждён!`, at: Date.now(), type: 'victory' }]
+       : [{ id: `boss-${bossWeek.id}`, text: `⚔️ Битва с "${bossName}" активна`, at: Date.now(), type: 'info' }];
 
-   return {
-     name: bossWeek.boss_name ?? defaultBoss.name,
-     emoji: bossWeek.boss_emoji ?? defaultBoss.emoji,
-     subtitle: bossWeek.boss_subtitle ?? defaultBoss.subtitle,
-     maxHp,
-     hp,
-     weakness: bossWeek.boss_weakness ?? defaultBoss.weakness,
-     daysLeft,
-     phase,
-     damageByMember,
-     damageByMemberToday,
-     logs,
+    return {
+      id: bossWeek.id,
+      name: bossName,
+      emoji: bossWeek.boss_emoji ?? bossConfig.emoji,
+      subtitle: bossWeek.boss_subtitle ?? bossConfig.subtitle,
+      imageKey: bossConfig.imageKey,
+      maxHp,
+      hp,
+      weakness: bossWeek.boss_weakness ?? bossConfig.weakness,
+      daysLeft,
+      phase,
+      damageByMember,
+      damageByMemberToday,
+      logs,
    };
 };
 

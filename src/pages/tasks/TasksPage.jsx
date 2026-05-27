@@ -12,6 +12,7 @@ export const TasksPage = () => {
   const members = useStore((state) => state.members);
   const authUserId = useStore((state) => state.authUserId);
   const allTasks = useStore((state) => state.tasks);
+  const family = useStore((state) => state.family);
   const currentMember = useStore((state) => state.getCurrentMember());
   const getMemberProgress = useStore((state) => state.getMemberProgress);
   const isCompleted = useStore((state) => state.isCompleted);
@@ -100,7 +101,7 @@ export const TasksPage = () => {
               <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">{member.name}</h1>
               {isOwnProfile && (
                 <p className="text-[13px] font-medium text-[var(--text-secondary)]">
-                  {progress.completed} из {progress.total} · {member.xp} XP · {member.coins} <img src="/common/money.png" alt="" className="inline-block w-4 h-4 align-text-bottom" />
+                  {progress.completed} из {progress.total} · {member.xp} XP · {family?.coins ?? 0} <img src="/common/money.png" alt="" className="inline-block w-4 h-4 align-text-bottom" />
                 </p>
               )}
             </div>

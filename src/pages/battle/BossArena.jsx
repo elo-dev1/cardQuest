@@ -19,7 +19,8 @@ export const BossArena = ({ boss, lastDamageEvent }) => {
 
   const hpBarClass = hpPercent <= 20 ? 'hp-bar-critical' : '';
 
-  const bossImage = isPhase2 ? '/boss/dragon/angry.png' : '/boss/dragon/standard.png';
+  const imageKey = boss.imageKey || 'dragon';
+  const bossImage = isPhase2 ? `/boss/${imageKey}/angry.png` : `/boss/${imageKey}/standard.png`;
   const daysUrgent = boss.daysLeft <= 2;
 
   useEffect(() => {

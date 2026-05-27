@@ -5,8 +5,6 @@ export const normalizeFamily = (family) => {
   return {
     ...family,
     coins: family.coins ?? 0,
-    gems: family.gems ?? family.crystals ?? 0,
-    crystals: family.crystals ?? family.gems ?? 0,
     guild_level: family.guild_level ?? 1,
     guild_xp: family.guild_xp ?? 0,
     dailyBonusClaimedAt: family.dailyBonusClaimedAt ?? family.last_login_date ?? null,

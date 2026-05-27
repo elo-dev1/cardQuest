@@ -32,8 +32,9 @@ export const TaskItem = ({ task, memberId, index = 0, isInteractive = true }) =>
       return;
     }
     setAnimating(true);
-    setTimeout(() => setAnimating(false), 350);
+    await new Promise((r) => setTimeout(r, 600));
     const result = await completeTask(task.id, memberId);
+    setAnimating(false);
     if (result.wasNewReward) {
       if (activeEffect) {
         fireTaskEffect(activeEffect.replace('effect_', ''));

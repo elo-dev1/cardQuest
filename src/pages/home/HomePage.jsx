@@ -43,7 +43,7 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 -mt-3 md:mt-0">
       {/* Приветствие — мобильная версия: только дата */}
       <header className="hidden md:block">
         <div className="flex items-start justify-between gap-4">

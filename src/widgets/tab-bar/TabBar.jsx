@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
-  { icon: '🏠', label: 'Главная', path: '/home' },
-  { icon: '✅', label: 'Задачи', path: '/tasks' },
-  { icon: '🃏', label: 'Карточки', path: '/collection' },
-  { icon: '⚔️', label: 'Битва', path: '/battle' },
-  { icon: '👨‍👩‍👧', label: 'Семья', path: '/family' },
+  { icon: '/sidebar/home.png', label: 'Главная', path: '/home' },
+  { icon: '/sidebar/tasks.png', label: 'Задачи', path: '/tasks' },
+  { icon: '/sidebar/collections.png', label: 'Карточки', path: '/collection' },
+  { icon: '/sidebar/fight.png', label: 'Битва', path: '/battle' },
+  { icon: '/sidebar/family.png', label: 'Семья', path: '/family' },
 ];
 
 export const TabBar = () => {
@@ -29,7 +29,9 @@ export const TabBar = () => {
           className={`tab-item ${isActive(tab.path) ? 'active' : ''}`}
           onClick={() => handleTabClick(tab.path)}
         >
-          <span className="tab-icon">{tab.icon}</span>
+          <span className="tab-icon">
+            <img src={tab.icon} alt="" className="h-5 w-5" />
+          </span>
           <span className="tab-label">{tab.label}</span>
         </button>
       ))}

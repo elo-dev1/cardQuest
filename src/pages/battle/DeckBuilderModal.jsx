@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useStore } from '@/shared/store/useStore';
 import { CARD_LIBRARY } from '@/shared/data/cardData';
 import { getActiveSynergies } from '@/shared/data/synergies';
@@ -315,20 +315,22 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
   );
 
   return (
-    <AnimatePresence>
+    <motion.div
+      className="fixed inset-0 z-[9995]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       {/* Backdrop */}
-      <motion.div
-        className="fixed inset-0 z-[9994] backdrop-blur-sm"
+      <div
+        className="absolute inset-0 backdrop-blur-sm"
         style={{ background: 'var(--bg-overlay)' }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
         onClick={onClose}
       />
 
       {/* Mobile Bottom Sheet */}
       <motion.div
-        className="fixed bottom-0 left-0 right-0 z-[9995] block md:hidden"
+        className="absolute bottom-0 left-0 right-0 z-10 block md:hidden"
         initial={{ y: '100%' }}
         animate={{ y: sheetOffset > 0 ? sheetOffset : 0 }}
         exit={{ y: '100%' }}
@@ -342,7 +344,7 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
 
       {/* Desktop Centered Modal */}
       <motion.div
-        className="hidden md:grid md:place-items-center md:p-6"
+        className="absolute inset-0 z-10 hidden md:grid md:place-items-center md:p-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -358,6 +360,6 @@ export const DeckBuilderModal = ({ onClose, initialSlot }) => {
           {desktopContent}
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 };

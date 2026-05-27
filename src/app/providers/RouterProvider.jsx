@@ -10,6 +10,7 @@ import { CollectionPage } from '@/pages/collection/CollectionPage';
 import { ShopPage } from '@/pages/shop/ShopPage';
 import { BattlePage } from '@/pages/battle/BattlePage';
 import { StatsPage } from '@/pages/stats/StatsPage';
+import { ProfilePage } from '@/pages/profile/ProfilePage';
 import { FamilyPage } from '@/pages/family/FamilyPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
 import { useAuth } from '@/features/auth/model/useAuth';
@@ -83,6 +84,7 @@ export const AppRouter = () => {
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/battle" element={<BattlePage />} />
               <Route path="/stats" element={<StatsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/family" element={<FamilyPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>

@@ -15,9 +15,9 @@ export const BattlePage = () => {
   const lastDamageEvent = useStore((state) => state.lastDamageEvent);
 
   const [deckModal, setDeckModal] = useState(false);
+  const [deckSlot, setDeckSlot] = useState(undefined);
   const [showVictory, setShowVictory] = useState(false);
   const [showDefeat, setShowDefeat] = useState(false);
-  const wasDefeatedRef = useRef(false);
   const prevHpRef = useRef(boss.hp);
 
   useEffect(() => {
@@ -25,32 +25,32 @@ export const BattlePage = () => {
   }, [checkBossAttackNeeded]);
 
   useEffect(() => {
-    if (boss.hp !== prevHpRef.current && boss.hp === 0 && !wasDefeatedRef.current) {
-      wasDefeatedRef.current = true;
+    if (boss.hp !== prevHpRef.current && boss.hp === 0) {
       setShowVictory(true);
     }
     prevHpRef.current = boss.hp;
   }, [boss.hp]);
 
   useEffect(() => {
-    if (boss.daysLeft === 0 && boss.hp > 0 && !wasDefeatedRef.current) {
-      wasDefeatedRef.current = true;
-      setShowDefeat(true);
+    if (boss.daysLeft === 0 && boss.hp > 0 && boss.id) {
+      const key = `boss-defeat-${boss.id}`;
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, 'true');
+        setShowDefeat(true);
+      }
     }
-  }, [boss.daysLeft]);
+  }, [boss.daysLeft, boss.hp, boss.id]);
 
   const handleVictoryClose = useCallback(() => {
     setShowVictory(false);
-    wasDefeatedRef.current = false;
   }, []);
 
   const handleDefeatClose = useCallback(() => {
     setShowDefeat(false);
-    wasDefeatedRef.current = false;
   }, []);
 
   return (
-    <div className="space-y-5 pb-20">
+    <div className="space-y-5 pb-20 -mt-3 md:mt-0">
       <AnimatePresence>
         {showVictory && (
           <VictoryScreen
@@ -65,6 +65,7 @@ export const BattlePage = () => {
         {showDefeat && (
           <DefeatScreen
             bossName={boss.name}
+            bossEmoji={boss.emoji}
             onClose={handleDefeatClose}
           />
         )}
@@ -75,7 +76,7 @@ export const BattlePage = () => {
         lastDamageEvent={lastDamageEvent}
       />
 
-      <DeckZone onOpenBuilder={() => setDeckModal(true)} />
+      <DeckZone onOpenBuilder={(slot) => { setDeckSlot(slot); setDeckModal(true); }} />
 
       <GuildProgress />
 
@@ -91,11 +92,12 @@ export const BattlePage = () => {
         </div>
       </div>
 
-      <AnimatePresence>
-        {deckModal && (
-          <DeckBuilderModal onClose={() => setDeckModal(false)} />
-        )}
-      </AnimatePresence>
+      {deckModal && (
+        <DeckBuilderModal
+          onClose={() => { setDeckModal(false); setDeckSlot(undefined); }}
+          initialSlot={deckSlot}
+        />
+      )}
     </div>
   );
 };

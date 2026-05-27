@@ -14,7 +14,6 @@ export const normalizeMember = (member, index = 0) => {
     classId: heroClass,
     pin: member.pin ?? '',
     xp: member.xp ?? 0,
-    coins: member.coins ?? 0,
     level: member.level ?? 1,
     xp_next: member.xp_next ?? 120,
     total_tasks: member.total_tasks ?? 0,

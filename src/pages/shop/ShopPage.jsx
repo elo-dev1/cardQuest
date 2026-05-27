@@ -42,7 +42,11 @@ export const ShopPage = () => {
   const handleBuyEffect = (effect) => {
     const result = buyEffect(effect);
     if (!result.ok) {
-      addToast('Недостаточно монет для покупки.', 'error');
+      if (result.reason === 'level') {
+        addToast('Требуется 3 уровень персонажа для покупки эффектов.', 'error');
+      } else {
+        addToast('Недостаточно монет для покупки.', 'error');
+      }
       return;
     }
     if (result.alreadyOwned) {
@@ -56,7 +60,11 @@ export const ShopPage = () => {
   const handleBuyBackground = (bg) => {
     const result = buyBackground(bg);
     if (!result.ok) {
-      addToast('Недостаточно монет для покупки.', 'error');
+      if (result.reason === 'level') {
+        addToast('Требуется 7 уровень персонажа для покупки фонов.', 'error');
+      } else {
+        addToast('Недостаточно монет для покупки.', 'error');
+      }
       return;
     }
     if (result.alreadyOwned) {
@@ -70,7 +78,11 @@ export const ShopPage = () => {
   const handleBuyBoost = (boost) => {
     const result = buyBoost(boost);
     if (!result.ok) {
-      addToast('Недостаточно монет для покупки.', 'error');
+      if (result.reason === 'level') {
+        addToast('Требуется 5 уровень персонажа для покупки бустов.', 'error');
+      } else {
+        addToast('Недостаточно монет для покупки.', 'error');
+      }
       return;
     }
     if (result.alreadyActive) {
@@ -138,7 +150,9 @@ export const ShopPage = () => {
 
     const result = buyReward(reward.id);
     if (!result.ok) {
-      if (result.reason === 'insufficient_coins') {
+      if (result.reason === 'guild_level') {
+        addToast('Требуется 5 уровень гильдии для покупки наград.', 'error');
+      } else if (result.reason === 'insufficient_coins') {
         addToast('Недостаточно монет!', 'error');
       } else if (result.reason === 'cooldown') {
         addToast(`Награду можно снова купить через ${result.remainingHours}ч`, 'info');
@@ -164,18 +178,21 @@ export const ShopPage = () => {
         </div>
       </header>
 
-      <SegmentedControl
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: 'packs', label: 'Паки' },
-          { value: 'items', label: 'Предметы' },
-          { value: 'effects', label: 'Эффекты' },
-          { value: 'backgrounds', label: 'Фоны' },
-          { value: 'boosts', label: 'Бусты' },
-          { value: 'rewards', label: '🎁 Награды' },
-        ]}
-      />
+      <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide">
+        <SegmentedControl
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'packs', label: 'Паки' },
+            { value: 'items', label: 'Предметы' },
+            { value: 'effects', label: 'Эффекты' },
+            { value: 'backgrounds', label: 'Фоны' },
+            { value: 'boosts', label: 'Бусты' },
+            { value: 'rewards', label: '🎁 Награды' },
+          ]}
+          className="flex-nowrap"
+        />
+      </div>
 
       {tab === 'packs' ? (
         <div className="packs-scroll md:grid md:grid-cols-3 md:gap-4">
@@ -228,6 +245,7 @@ export const ShopPage = () => {
           {EFFECT_TYPES.map((effect) => {
             const owned = family?.ownedEffects?.includes(effect.id);
             const active = family?.activeEffect === effect.id;
+            const levelLocked = (member?.level ?? 0) < 3;
             return (
               <div key={effect.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
                 <img
@@ -241,16 +259,19 @@ export const ShopPage = () => {
                 </div>
                 <button
                   type="button"
+                  disabled={levelLocked}
                   className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
-                    active
-                      ? 'bg-[var(--sage)] text-white'
-                      : owned
-                        ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
-                        : 'btn-primary'
+                    levelLocked
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-not-allowed'
+                      : active
+                        ? 'bg-[var(--sage)] text-white'
+                        : owned
+                          ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
+                          : 'btn-primary'
                   }`}
                   onClick={() => handleBuyEffect(effect)}
                 >
-                  {active ? 'Активен ✓' : owned ? 'Выбрать' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {effect.price}</>}
+                  {levelLocked ? '🔒 ур. 3' : active ? 'Активен ✓' : owned ? 'Выбрать' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {effect.price}</>}
                 </button>
               </div>
             );
@@ -263,6 +284,7 @@ export const ShopPage = () => {
           {BACKGROUND_TYPES.map((bg) => {
             const owned = family?.ownedBackgrounds?.includes(bg.id);
             const active = family?.activeBackground === bg.id;
+            const levelLocked = (member?.level ?? 0) < 7;
             return (
               <div key={bg.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
                 <img
@@ -275,16 +297,19 @@ export const ShopPage = () => {
                 </div>
                 <button
                   type="button"
+                  disabled={levelLocked}
                   className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
-                    active
-                      ? 'bg-[var(--sage)] text-white'
-                      : owned
-                        ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
-                        : 'btn-primary'
+                    levelLocked
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-not-allowed'
+                      : active
+                        ? 'bg-[var(--sage)] text-white'
+                        : owned
+                          ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
+                          : 'btn-primary'
                   }`}
                   onClick={() => handleBuyBackground(bg)}
                 >
-                  {active ? 'Активен ✓' : owned ? 'Выбрать' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {bg.price}</>}
+                  {levelLocked ? '🔒 ур. 7' : active ? 'Активен ✓' : owned ? 'Выбрать' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {bg.price}</>}
                 </button>
               </div>
             );
@@ -296,6 +321,7 @@ export const ShopPage = () => {
         <section className="grid gap-4 md:grid-cols-2">
           {BOOST_TYPES.map((boost) => {
             const active = isBoostActive(boost.id);
+            const levelLocked = (member?.level ?? 0) < 5;
             return (
               <div key={boost.id} className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] flex items-center gap-4 p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
                 <img
@@ -309,14 +335,17 @@ export const ShopPage = () => {
                 </div>
                 <button
                   type="button"
+                  disabled={levelLocked}
                   className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
-                    active
-                      ? 'bg-[var(--sage)] text-white'
-                      : 'btn-primary'
+                    levelLocked
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-not-allowed'
+                      : active
+                        ? 'bg-[var(--sage)] text-white'
+                        : 'btn-primary'
                   }`}
                   onClick={() => handleBuyBoost(boost)}
                 >
-                  {active ? 'Активен ✓' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {boost.price}</>}
+                  {levelLocked ? '🔒 ур. 5' : active ? 'Активен ✓' : <><img src="/common/money.png" alt="" className="inline-block w-5 h-5 align-text-bottom" /> {boost.price}</>}
                 </button>
               </div>
             );
@@ -326,20 +355,29 @@ export const ShopPage = () => {
 
       {tab === 'rewards' ? (
         <div className="space-y-5">
-          <SegmentedControl
-            options={REWARD_CATEGORIES}
-            value={rewardCategory}
-            onChange={setRewardCategory}
-            className="flex-nowrap overflow-x-auto"
-          />
+          {(family?.guild_level ?? 1) < 5 && (
+            <div className="rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-center text-sm font-medium text-[var(--text-tertiary)]">
+              🔒 Требуется 5 уровень гильдии для покупки наград
+            </div>
+          )}
+          <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide">
+            <SegmentedControl
+              options={REWARD_CATEGORIES}
+              value={rewardCategory}
+              onChange={setRewardCategory}
+              className="flex-nowrap"
+            />
+          </div>
           <section className="space-y-2">
             {filteredRewards.map((reward) => {
               const cd = cooldownMap[reward.id];
               const onCooldown = cd?.onCooldown;
+              const guildLocked = (family?.guild_level ?? 1) < 5;
+              const shouldDisable = onCooldown || guildLocked;
               return (
                 <div
                   key={reward.id}
-                  className={`flex items-center gap-3 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border ${onCooldown ? 'border-[var(--sage)] opacity-60' : 'border-[var(--border-soft)]'}`}
+                  className={`flex items-center gap-3 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4 shadow-[var(--shadow-card)] border ${shouldDisable ? 'border-[var(--sage)] opacity-60' : 'border-[var(--border-soft)]'}`}
                 >
                   <span className="text-2xl">{reward.emoji}</span>
                   <div className="min-w-0 flex-1">
@@ -348,11 +386,11 @@ export const ShopPage = () => {
                   </div>
                   <button
                     type="button"
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap ${onCooldown ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-default' : 'btn-primary'}`}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium whitespace-nowrap ${shouldDisable ? 'bg-[var(--bg-elevated)] text-[var(--text-tertiary)] cursor-default' : 'btn-primary'}`}
                     onClick={() => handleBuyReward(reward)}
-                    disabled={onCooldown}
+                    disabled={shouldDisable}
                   >
-                    {onCooldown && cd.timeLeft !== null
+                    {guildLocked ? '🔒 ур. гильдии 5' : onCooldown && cd.timeLeft !== null
                       ? formatTimeLeft(cd.timeLeft)
                       : onCooldown
                         ? 'Куплено ✓'

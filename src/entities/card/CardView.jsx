@@ -69,7 +69,7 @@ export const CardView = ({ card, count = 0, stars = 0, isNew = false, size = 'sm
         <>
           <img className="absolute inset-0 h-[65%] w-full object-cover" src={card.image} alt={card.name} loading="lazy" />
           <div className="absolute inset-x-0 bottom-0 h-[35%] bg-[var(--bg-surface)] px-2 pb-2 pt-2 text-center">
-            <div className={`${size === 'lg' ? 'text-sm' : 'text-[11px]'} line-clamp-1 font-semibold leading-tight text-[var(--text-primary)]`}>
+            <div className={`${size === 'lg' ? 'text-sm' : 'text-[11px]'} line-clamp-1 font-semibold leading-tight text-[var(--text-primary)] card-name`}>
               {card.name}
             </div>
             <div className={`${size === 'lg' ? 'text-[10px]' : 'text-[9px]'} mt-0.5 font-medium`} style={{ color: rarity.color }}>
@@ -86,7 +86,7 @@ export const CardView = ({ card, count = 0, stars = 0, isNew = false, size = 'sm
             <span className={`${size === 'lg' ? 'text-5xl' : 'text-[32px]'} transition-transform duration-[180ms] group-hover:scale-110`}>{card.emoji}</span>
           </div>
           <div className="flex h-[35%] flex-col justify-center bg-[var(--bg-surface)] px-2 text-center">
-            <div className={`${size === 'lg' ? 'text-sm' : 'text-[11px]'} line-clamp-1 font-semibold leading-tight text-[var(--text-primary)]`}>
+            <div className={`${size === 'lg' ? 'text-sm' : 'text-[11px]'} line-clamp-1 font-semibold leading-tight text-[var(--text-primary)] card-name`}>
               {card.name}
             </div>
             <div className={`${size === 'lg' ? 'text-[10px]' : 'text-[9px]'} mt-0.5 font-medium`} style={{ color: rarity.color }}>

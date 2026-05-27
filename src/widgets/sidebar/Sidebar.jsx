@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { ThemeToggle } from '@/shared/ui/ThemeToggle';
 import { MemberAvatar } from '@/shared/ui/MemberAvatar';
@@ -17,13 +17,14 @@ const navItems = [
 ];
 
 export const Sidebar = () => {
+  const navigate = useNavigate();
   const family = useStore((state) => state.family);
   const member = useStore((state) => state.getCurrentMember());
   const heroClass = member ? HERO_CLASSES[member.classId] : null;
   const levelProgress = member ? member.xp % 120 : 0;
 
   return (
-    <aside className="sticky top-6 h-fit w-[220px] shrink-0 rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-4">
+    <aside className="sticky top-6 h-fit w-[220px] shrink-0 rounded-[var(--r-lg)] bg-[var(--bg-sidebar)] p-4">
       <div className="mb-6 px-2 font-['DM_Serif_Display'] text-xl tracking-[-0.02em] text-[var(--text-primary)]">
         ⚔️ Card Quest
       </div>
@@ -31,8 +32,9 @@ export const Sidebar = () => {
       {member ? (
         <button
           type="button"
-          className="mb-5 w-full rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-left transition hover:bg-[var(--bg-surface)]"
+          className="mb-5 w-full rounded-[var(--r-md)] bg-[var(--bg-elevated)] p-3 text-left transition hover:bg-[var(--bg-surface)] border border-[var(--border-soft)]"
           title="Профиль"
+          onClick={() => navigate('/profile')}
         >
           <div className="flex items-center gap-3">
             <MemberAvatar avatar={member.avatar} className="h-9 w-9 rounded-full bg-[var(--bg-surface)] text-xl" />

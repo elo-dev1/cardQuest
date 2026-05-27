@@ -36,6 +36,7 @@ export const CollectionPage = () => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const currentMemberId = useStore((state) => state.currentMemberId);
+  const family = useStore((state) => state.family);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
   
   const otherMembers = members.filter((m) => m.id !== currentCollectionMember);
@@ -52,6 +53,10 @@ export const CollectionPage = () => {
 
   const handleUpgrade = () => {
     if (!selectedCard) return;
+    if ((family?.guild_level ?? 1) < 5) {
+      addToast('Требуется 5 уровень гильдии для улучшения карт.', 'error');
+      return;
+    }
     const item = collectionMap.get(selectedCard.id);
     if (!item || item.stars >= 3) {
       addToast('Карточка уже на максимальном уровне!', 'error');
@@ -88,6 +93,7 @@ export const CollectionPage = () => {
     const newAttack = Math.round(selectedCard.attack * starLevel.multiplier);
     const newDefense = Math.round(selectedCard.defense * starLevel.multiplier);
     const hasEnoughCoins = (family?.coins ?? 0) >= cost.costCoins;
+    const hasGuildLevel = (family?.guild_level ?? 1) >= 5;
     return {
       currentStars,
       nextStars,
@@ -96,8 +102,9 @@ export const CollectionPage = () => {
       nextLevel: starLevel,
       newAttack,
       newDefense,
-      canUpgrade: item && item.count >= 2 && hasEnoughCoins,
+      canUpgrade: item && item.count >= 2 && hasEnoughCoins && hasGuildLevel,
       hasEnoughCoins,
+      hasGuildLevel,
       familyCoins: family?.coins ?? 0,
     };
   };
@@ -116,13 +123,13 @@ export const CollectionPage = () => {
               onClick={() => setCurrentCollectionMember(member.id)}
               className={`flex items-center gap-2 shrink-0 rounded-full px-4 py-2 transition ${
                 isSelected
-                  ? 'bg-[var(--charcoal)] text-white'
-                  : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
+                  ? 'bg-[var(--charcoal)] text-[var(--text-inverse)]'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
               <MemberAvatar avatar={member.avatar} className="h-7 w-7 rounded-full bg-[var(--bg-elevated)] text-xl" />
               <span className="text-sm font-medium">{member.name}</span>
-              <span className="text-xs opacity-60">({memberColl.length})</span>
+              <span className="text-xs text-[var(--text-secondary)]">({memberColl.length})</span>
             </button>
           );
         })}
@@ -251,7 +258,7 @@ export const CollectionPage = () => {
               <div className="flex flex-col items-center">
                 <CardView card={selectedCard} count={collectionMap.get(selectedCard.id)?.count} stars={collectionMap.get(selectedCard.id)?.stars ?? 0} size="lg" />
                 
-                <h2 className="mt-4 font-['DM_Serif_Display'] text-[22px] text-[var(--text-primary)]">{selectedCard.name}</h2>
+                <h2 className="mt-4 font-['DM_Serif_Display'] text-[22px] text-[var(--text-primary)] card-name">{selectedCard.name}</h2>
                 
                 <div className="mt-2 flex gap-2">
                   <span className={`badge badge-${selectedCard.rarity}`}>
@@ -268,15 +275,27 @@ export const CollectionPage = () => {
                   <div className="flex gap-2">
                     <button 
                       type="button" 
-                      className="btn-secondary flex-1" 
+                      className={`btn-secondary flex-1 ${(family?.guild_level ?? 1) < 5 ? 'opacity-50' : ''}`}
                       onClick={handleUpgrade}
-                      disabled={(collectionMap.get(selectedCard.id)?.stars ?? 0) >= 3 || (collectionMap.get(selectedCard.id)?.count ?? 0) < 2}
+                      disabled={(collectionMap.get(selectedCard.id)?.stars ?? 0) >= 3 || (collectionMap.get(selectedCard.id)?.count ?? 0) < 2 || (family?.guild_level ?? 1) < 5}
                     >
-                      ⬆️ Улучшить
+                      {(family?.guild_level ?? 1) < 5 ? '🔒 ур. гильдии 5' : '⬆️ Улучшить'}
                     </button>
                     {otherMembers.length > 0 && (
-                      <button type="button" className="btn-primary flex-1" onClick={() => setShowExchangeModal(true)}>
-                        🔄 Обмен
+                      <button
+                        type="button"
+                        className={`btn-primary flex-1 ${(currentCollectionMember ? (members.find(m => m.id === currentCollectionMember)?.level ?? 0) : 0) < 7 ? 'opacity-50' : ''}`}
+                        onClick={() => {
+                          const collMember = members.find(m => m.id === currentCollectionMember);
+                          if (collMember && collMember.level < 7) {
+                            addToast('Требуется 7 уровень персонажа для обмена картами.', 'error');
+                            return;
+                          }
+                          setShowExchangeModal(true);
+                        }}
+                        disabled={(currentCollectionMember ? (members.find(m => m.id === currentCollectionMember)?.level ?? 0) : 0) < 7}
+                      >
+                        {(currentCollectionMember ? (members.find(m => m.id === currentCollectionMember)?.level ?? 0) : 0) < 7 ? '🔒 ур. 7' : '🔄 Обмен'}
                       </button>
                     )}
                   </div>
@@ -400,7 +419,7 @@ export const CollectionPage = () => {
                   onClick={confirmUpgrade}
                   disabled={!getUpgradeInfo().canUpgrade}
                 >
-                  ⬆️ Улучшить
+                  {!getUpgradeInfo().hasGuildLevel ? '🔒 ур. гильдии 5' : '⬆️ Улучшить'}
                 </button>
               </div>
             </motion.div>
