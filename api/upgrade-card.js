@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { UPGRADE_COSTS } from '../src/shared/data/cardData';
 
 function createSupabaseClient(token) {
-  const client = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+  const client = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SECRET_KEY || process.env.VITE_SUPABASE_ANON_KEY);
   if (token) {
     client.auth.setSession({ access_token: token, refresh_token: '' });
   }

@@ -59,7 +59,11 @@ export const SettingsPage = () => {
   };
 
   const saveName = () => {
-    updateGuildName(name);
+    if (!name.trim()) {
+      addToast('Название гильдии не может быть пустым', 'error');
+      return;
+    }
+    updateGuildName(name.trim());
     addToast('Название гильдии сохранено.', 'success');
   };
 
@@ -169,12 +173,17 @@ export const SettingsPage = () => {
       <section className="rounded-[var(--r-lg)] bg-[var(--bg-surface)] p-5 shadow-[var(--shadow-card)] border border-[var(--border-soft)]">
         <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Гильдия</h2>
         <hr className="my-4 border-[var(--border-soft)]" />
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <input className="input-field" value={name} onChange={(event) => setName(event.target.value)} />
-          <button type="button" className="btn-primary shrink-0" onClick={saveName}>
-            Сохранить
-          </button>
-        </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input 
+              className="input-field" 
+              value={name} 
+              maxLength={50}
+              onChange={(event) => setName(event.target.value)} 
+            />
+            <button type="button" className="btn-primary shrink-0" onClick={saveName}>
+              Сохранить
+            </button>
+          </div>
       </section>
 
       {/* Участники */}
@@ -237,15 +246,18 @@ export const SettingsPage = () => {
               <p className="text-[13px] font-medium text-[var(--text-secondary)]">Коды для взрослых участников с отдельным аккаунтом.</p>
             </div>
             <div className="flex items-center gap-2">
-              <input
-                className="input-field !w-24"
-                type="number"
-                min={1}
-                max={20}
-                value={inviteUses}
-                onChange={(event) => setInviteUses(event.target.value)}
-                aria-label="Количество использований"
-              />
+               <input
+                 className="input-field !w-24"
+                 type="number"
+                 min={1}
+                 max={20}
+                 value={inviteUses}
+                 onChange={(event) => {
+                   const val = Math.min(20, Math.max(1, Number(event.target.value) || 1));
+                   setInviteUses(val);
+                 }}
+                 aria-label="Количество использований"
+               />
               <button type="button" className="btn-primary shrink-0 px-4 py-2 text-sm" onClick={createInvite} disabled={inviteLoading}>
                 + Создать
               </button>

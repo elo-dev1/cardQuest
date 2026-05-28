@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AVATARS, HERO_CLASSES } from '@/shared/data/memberData';
 import { AvatarPicker } from '@/shared/ui/AvatarPicker';
+import { hashPin } from '@/shared/lib/crypto';
 
 const classEntries = Object.entries(HERO_CLASSES);
 
@@ -30,7 +31,7 @@ export const AddChildModal = ({ child = null, open, onClose, onSubmit }) => {
         name: form.name.trim(),
         avatar: form.avatar,
         heroClass: form.heroClass,
-        pin: form.pin.replace(/\D/g, '').slice(0, 4),
+        pin: await hashPin(form.pin.replace(/\D/g, '').slice(0, 4)),
       });
       onClose();
     } finally {
@@ -67,13 +68,14 @@ export const AddChildModal = ({ child = null, open, onClose, onSubmit }) => {
 
             <label className="mb-4 block">
               <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Имя</span>
-              <input
-                className="input-field"
-                value={form.name}
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Алексей"
-                autoFocus
-              />
+               <input
+                 className="input-field"
+                 value={form.name}
+                 maxLength={50}
+                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                 placeholder="Алексей"
+                 autoFocus
+               />
             </label>
 
             <div className="mb-6">

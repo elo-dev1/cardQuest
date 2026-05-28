@@ -9,7 +9,7 @@ webpush.setVapidDetails(
 );
 
 function createSupabaseClient(token) {
-  const client = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+  const client = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SECRET_KEY || process.env.VITE_SUPABASE_ANON_KEY);
   if (token) {
     client.auth.setSession({ access_token: token, refresh_token: '' });
   }
@@ -54,11 +54,11 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Member does not belong to you' });
     }
 
-    const { error } = await auth.supabase.from('push_subscriptions').upsert(
+    const { error: upsertError } = await auth.supabase.from('push_subscriptions').upsert(
       { member_id: memberId, family_id: familyId, endpoint: subscription.endpoint, keys: subscription.keys },
       { onConflict: 'member_id' }
     );
-    if (error) return res.status(500).json({ error: error.message });
+    if (upsertError) return res.status(500).json({ error: 'Failed to subscribe' });
     return res.json({ ok: true });
   }
 
@@ -102,11 +102,15 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'You are not a member of this family' });
     }
 
-    const { data: buyer } = await auth.supabase
+    const { data: buyer, error: buyerError } = await auth.supabase
       .from('members')
-      .select('name')
+      .select('name, family_id')
       .eq('id', buyerId)
       .single();
+
+    if (buyerError || !buyer || buyer.family_id !== familyId) {
+      return res.status(403).json({ error: 'Buyer not found in this family' });
+    }
 
     const reward = REAL_REWARDS.find(r => r.id === rewardId);
     if (!reward || !buyer) return res.status(400).json({ error: 'Invalid reward or buyer' });

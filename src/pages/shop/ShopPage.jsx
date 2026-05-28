@@ -21,8 +21,9 @@ export const ShopPage = () => {
   const [tab, setTab] = useState('packs');
   const [rewardCategory, setRewardCategory] = useState('time');
 
-  const buyPack = (pack) => {
-    if (!spendCoins(pack.price_coins)) {
+  const buyPack = async (pack) => {
+    const paid = await spendCoins(pack.price_coins);
+    if (!paid) {
       addToast('Недостаточно монет для покупки пака.', 'error');
       return;
     }
@@ -30,8 +31,8 @@ export const ShopPage = () => {
     window.dispatchEvent(new CustomEvent('open-pack', { detail: { packId: pack.id, alreadyPaid: true } }));
   };
 
-  const handleBuyItem = (item) => {
-    const result = buyItem(item);
+  const handleBuyItem = async (item) => {
+    const result = await buyItem(item);
     if (!result.ok) {
       addToast('Недостаточно монет для покупки.', 'error');
       return;
@@ -39,8 +40,8 @@ export const ShopPage = () => {
     addToast(result.alreadyOwned ? 'Предмет надет ✓' : 'Покупка добавлена в инвентарь!', 'success');
   };
 
-  const handleBuyEffect = (effect) => {
-    const result = buyEffect(effect);
+  const handleBuyEffect = async (effect) => {
+    const result = await buyEffect(effect);
     if (!result.ok) {
       if (result.reason === 'level') {
         addToast('Требуется 3 уровень персонажа для покупки эффектов.', 'error');
@@ -57,8 +58,8 @@ export const ShopPage = () => {
     }
   };
 
-  const handleBuyBackground = (bg) => {
-    const result = buyBackground(bg);
+  const handleBuyBackground = async (bg) => {
+    const result = await buyBackground(bg);
     if (!result.ok) {
       if (result.reason === 'level') {
         addToast('Требуется 7 уровень персонажа для покупки фонов.', 'error');
@@ -75,8 +76,8 @@ export const ShopPage = () => {
     }
   };
 
-  const handleBuyBoost = (boost) => {
-    const result = buyBoost(boost);
+  const handleBuyBoost = async (boost) => {
+    const result = await buyBoost(boost);
     if (!result.ok) {
       if (result.reason === 'level') {
         addToast('Требуется 5 уровень персонажа для покупки бустов.', 'error');
@@ -137,7 +138,7 @@ export const ShopPage = () => {
     });
   }, [rewardCategory, member]);
 
-  const handleBuyReward = (reward) => {
+  const handleBuyReward = async (reward) => {
     const cd = cooldownMap[reward.id];
     if (cd && cd.onCooldown) {
       if (cd.timeLeft !== null) {
@@ -147,8 +148,7 @@ export const ShopPage = () => {
       }
       return;
     }
-
-    const result = buyReward(reward.id);
+    const result = await buyReward(reward.id);
     if (!result.ok) {
       if (result.reason === 'guild_level') {
         addToast('Требуется 5 уровень гильдии для покупки наград.', 'error');

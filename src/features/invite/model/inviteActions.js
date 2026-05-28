@@ -20,7 +20,9 @@ const writeJson = (key, value) => {
 
 const makeCode = () => {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+  const array = new Uint32Array(6);
+  crypto.getRandomValues(array);
+  return Array.from(array, (num) => alphabet[num % alphabet.length]).join('');
 };
 
 const makeExpiresAt = (days = 7) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();

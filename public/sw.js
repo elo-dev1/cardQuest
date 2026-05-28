@@ -1,6 +1,7 @@
-const CACHE_NAME = 'cardquest-v1';
-const STATIC_CACHE = 'cardquest-static-v1';
-const DYNAMIC_CACHE = 'cardquest-dynamic-v1';
+const SW_VERSION = '2026-05-28-v1';
+const CACHE_NAME = `cardquest-${SW_VERSION}`;
+const STATIC_CACHE = `cardquest-static-${SW_VERSION}`;
+const DYNAMIC_CACHE = `cardquest-dynamic-${SW_VERSION}`;
 
 const STATIC_ASSETS = [
   '/',
@@ -70,7 +71,7 @@ async function cacheFirst(request) {
     }
     return response;
   } catch {
-    return caches.match('/index.html');
+    return new Response('Resource unavailable', { status: 504 });
   }
 }
 
@@ -129,7 +130,12 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const urlToOpen = event.notification.data?.url || '/shop';
+  let urlToOpen = event.notification.data?.url || '/shop';
+  // Only allow relative URLs or same-origin absolute URLs
+  if (urlToOpen.startsWith('http') && !urlToOpen.startsWith(self.location.origin)) {
+    urlToOpen = '/';
+    console.warn('Blocked navigation to external URL from notification click');
+  }
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CARD_LIBRARY, RARITIES } from '@/shared/data/cardData';
 import { MemberAvatar } from '@/shared/ui/MemberAvatar';
@@ -18,10 +18,20 @@ export const CardExchangeModal = ({ isOpen, onClose, offeredCard }) => {
     [members, currentMemberId]
   );
   const [selectedRecipient, setSelectedRecipient] = useState(null);
-  const [selectedOfferedCard, setSelectedOfferedCard] = useState(offeredCard);
+  const [selectedOfferedCard, setSelectedOfferedCard] = useState(null);
   const [selectedRequestedCard, setSelectedRequestedCard] = useState(null);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+      setSelectedRecipient(null);
+      setSelectedOfferedCard(offeredCard);
+      setSelectedRequestedCard(null);
+      setIsSubmitting(false);
+    }
+  }, [isOpen, offeredCard]);
 
   const otherMembers = useMemo(
     () => members.filter((m) => m.id !== currentMemberId),

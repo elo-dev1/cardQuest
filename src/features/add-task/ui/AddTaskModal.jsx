@@ -80,13 +80,14 @@ export const AddTaskModal = ({ open, onClose }) => {
 
             <label className="mb-4 block">
               <span className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Название</span>
-              <input
-                className="input-field"
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="Например: Убрать комнату"
-                autoFocus
-              />
+               <input
+                 className="input-field"
+                 value={form.title}
+                 maxLength={100}
+                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                 placeholder="Например: Убрать комнату"
+                 autoFocus
+               />
             </label>
 
             <div className="mb-4">

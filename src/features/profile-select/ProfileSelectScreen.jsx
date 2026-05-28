@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { HERO_CLASSES } from '@/shared/data/memberData';
 import { MemberAvatar } from '@/shared/ui/MemberAvatar';
 import { useStore } from '@/shared/store/useStore';
+import { verifyPin } from '@/shared/lib/crypto';
 
 const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', 'ok'];
 
@@ -15,6 +16,8 @@ export const ProfileSelectScreen = () => {
   const [selected, setSelected] = useState(null);
   const [pin, setPin] = useState('');
   const [invalid, setInvalid] = useState(false);
+  const [lockoutUntil, setLockoutUntil] = useState(null);
+  const [attempts, setAttempts] = useState(0);
 
   const adultMember = members.find((member) => member.user_id && member.user_id === authUserId);
   const selectableMembers = adultMember
@@ -31,17 +34,35 @@ export const ProfileSelectScreen = () => {
     setPin('');
   };
 
-  const submitPin = (value = pin) => {
+  const submitPin = async (value = pin) => {
     if (!selected) return;
-    if (value === selected.pin) {
+    
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      addToast(`Слишком много попыток. Подождите ${remaining} сек.`, 'error');
+      return;
+    }
+
+    if (await verifyPin(value, selected.pin)) {
       setCurrentMember(selected.id);
       setSelected(null);
       setPin('');
+      setAttempts(0);
       return;
     }
-    setInvalid(true);
+
+    const nextAttempts = attempts + 1;
+    setAttempts(nextAttempts);
+    
+    if (nextAttempts >= 3) {
+      setLockoutUntil(Date.now() + 30000);
+      addToast('Слишком много попыток. Блокировка на 30 секунд.', 'error');
+    } else {
+      setInvalid(true);
+      addToast(`Неверный PIN. Попыток осталось: ${3 - nextAttempts}`, 'error');
+    }
+    
     setPin('');
-    addToast('Неверный PIN. Попробуйте ещё раз.', 'error');
     window.setTimeout(() => setInvalid(false), 380);
   };
 
@@ -56,7 +77,9 @@ export const ProfileSelectScreen = () => {
     }
     setPin((current) => {
       const next = `${current}${digit}`.slice(0, 4);
-      if (next.length === 4) window.setTimeout(() => submitPin(next), 80);
+      if (next.length === 4) {
+        window.setTimeout(async () => await submitPin(next), 80);
+      }
       return next;
     });
   };

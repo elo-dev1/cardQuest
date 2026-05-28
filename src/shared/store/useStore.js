@@ -1013,55 +1013,65 @@ export const useStore = create((set, get) => ({
     }));
   },
 
-  spendCoins: (amount) => {
+  spendCoins: async (amount) => {
     const state = get();
     if (!state.family || state.family.coins < amount) return false;
-    const coins = state.family.coins - amount;
-    const prevCoins = state.family.coins;
-    commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
-
-    if (isSupabaseConfigured) {
-      runRemote(
-        supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set((state) => ({ ...state, family: normalizeFamily({ ...state.family, coins: prevCoins }) }));
-          saveState(get());
-          get().addToast('Ошибка при списании монет', 'error');
-          throw err;
-        }), 
-        get, 
-        'spendCoins'
-      );
-    }
-    return true;
-  },
-
-  addCoins: (amount) => {
-    const state = get();
-    const coins = (state.family?.coins ?? 0) + amount;
-    const prevCoins = state.family?.coins ?? 0;
-    commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
-    if (isSupabaseConfigured && state.family?.id) {
-      runRemote(
-        supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set((state) => ({ ...state, family: normalizeFamily({ ...state.family, coins: prevCoins }) }));
-          saveState(get());
-          get().addToast('Ошибка при начислении монет', 'error');
-          throw err;
-        }), 
-        get, 
-        'addCoins'
-      );
+    
+    try {
+      const response = await fetch('/api/spend-coins', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ familyId: state.family.id, amount }),
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to spend coins');
+      
+      commit(set, get, (current) => ({ 
+        ...current, 
+        family: normalizeFamily({ ...current.family, coins: result.newCoins }) 
+      }));
+      return true;
+    } catch (error) {
+      console.error('spendCoins error:', error);
+      get().addToast('Ошибка при списании монет', 'error');
+      return false;
     }
   },
 
-  buyItem: (item) => {
+  addCoins: async (amount) => {
     const state = get();
+    if (!state.family?.id) return;
+    
+    try {
+      const response = await fetch('/api/add-coins', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ familyId: state.family.id, amount }),
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to add coins');
+      
+      commit(set, get, (current) => ({ 
+        ...current, 
+        family: normalizeFamily({ ...current.family, coins: result.newCoins }) 
+      }));
+    } catch (error) {
+      console.error('addCoins error:', error);
+      get().addToast('Ошибка при начислении монет', 'error');
+    }
+  },
+
+  buyItem: async (item) => {
+    const state = get();
+    if (!state.family?.id) return { ok: false, reason: 'no_family' };
     if (state.family.ownedItems?.includes(item.id)) {
       const newFamily = normalizeFamily({
         ...state.family,
@@ -1071,65 +1081,63 @@ export const useStore = create((set, get) => ({
         ...current,
         family: newFamily,
       }));
-    if (isSupabaseConfigured && state.family?.id) {
-      const prevFamily = { ...state.family };
-      runRemote(
-        supabase.from('families').update(familyPatchToDb({
-          equipped_items: newFamily.equippedItems,
-        })).eq('id', state.family.id).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set({ family: normalizeFamily(prevFamily) });
-          saveState(get());
-          get().addToast('Ошибка покупки предмета', 'error');
-          throw err;
-        }),
-        get,
-        'buyItem',
-      );
+      if (isSupabaseConfigured) {
+        runRemote(
+          supabase.from('families').update(familyPatchToDb({
+            equipped_items: newFamily.equippedItems,
+          })).eq('id', state.family.id).then(({ error }) => {
+            if (error) throw error;
+            return null;
+          }).catch(err => {
+            set({ family: normalizeFamily(state.family) });
+            saveState(get());
+            get().addToast('Ошибка экипировки предмета', 'error');
+            throw err;
+          }),
+          get,
+          'buyItem',
+        );
+      }
+      return { ok: true, alreadyOwned: true };
     }
-    return { ok: true, alreadyOwned: true };
-  }
-
+    
     if (state.family.coins < item.price) return { ok: false, alreadyOwned: false };
-    const newFamily = normalizeFamily({
-      ...state.family,
-      coins: state.family.coins - item.price,
-      ownedItems: [...(state.family.ownedItems || []), item.id],
-      equippedItems: { ...state.family.equippedItems, [item.type]: item.id },
-    });
-    commit(set, get, (current) => ({
-      ...current,
-      family: newFamily,
-    }));
-    if (isSupabaseConfigured && state.family?.id) {
-      const prevFamily = { ...state.family };
-      runRemote(
-        supabase.from('families').update(familyPatchToDb({
-          coins: newFamily.coins,
-          ownedItems: newFamily.ownedItems,
-          equippedItems: newFamily.equippedItems,
-        })).eq('id', state.family.id).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set({ family: normalizeFamily(prevFamily) });
-          saveState(get());
-          get().addToast('Ошибка покупки предмета', 'error');
-          throw err;
-        }),
-        get,
-        'buyItem',
-      );
+
+    try {
+      const response = await fetch('/api/purchase-item', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ familyId: state.family.id, itemId: item.id, itemType: 'item' }),
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Purchase failed');
+
+      commit(set, get, (current) => {
+        const newFamily = normalizeFamily({
+          ...current.family,
+          coins: result.newCoins,
+          ownedItems: [...(current.family.ownedItems || []), item.id],
+          equippedItems: { ...current.family.equippedItems, [item.type]: item.id },
+        });
+        return { ...current, family: newFamily };
+      });
+      return { ok: true, alreadyOwned: false };
+    } catch (error) {
+      console.error('buyItem error:', error);
+      get().addToast('Ошибка покупки предмета', 'error');
+      return { ok: false, alreadyOwned: false };
     }
-    return { ok: true, alreadyOwned: false };
   },
 
-  buyEffect: (effect) => {
+  buyEffect: async (effect) => {
     const state = get();
     const member = state.getCurrentMember();
     if (!member || member.level < 3) return { ok: false, alreadyOwned: false, reason: 'level' };
+    if (!state.family?.id) return { ok: false, alreadyOwned: false, reason: 'no_family' };
     if (state.family.ownedEffects?.includes(effect.id)) {
       commit(set, get, (current) => ({
         ...current,
@@ -1138,7 +1146,7 @@ export const useStore = create((set, get) => ({
           activeEffect: effect.id,
         }),
       }));
-      if (isSupabaseConfigured && state.family?.id) {
+      if (isSupabaseConfigured) {
         runRemote(
           supabase.from('families').update({ active_effect: effect.id }).eq('id', state.family.id).then(({ error }) => {
             if (error) throw error;
@@ -1156,37 +1164,35 @@ export const useStore = create((set, get) => ({
       return { ok: true, alreadyOwned: true };
     }
     if (state.family.coins < effect.price) return { ok: false, alreadyOwned: false };
-    let newFamily;
-    commit(set, get, (current) => {
-      newFamily = normalizeFamily({
-        ...current.family,
-        coins: current.family.coins - effect.price,
-        ownedEffects: [...(current.family.ownedEffects || []), effect.id],
-        activeEffect: effect.id,
+    
+    try {
+      const response = await fetch('/api/purchase-item', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ familyId: state.family.id, itemId: effect.id, itemType: 'effect' }),
       });
-      return { ...current, family: newFamily };
-    });
-    if (isSupabaseConfigured && state.family?.id) {
-      const prevFamily = { ...state.family };
-      runRemote(
-        supabase.from('families').update({
-          owned_effects: newFamily.ownedEffects,
-          active_effect: newFamily.activeEffect,
-          coins: newFamily.coins,
-        }).eq('id', state.family.id).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set({ family: normalizeFamily(prevFamily) });
-          saveState(get());
-          get().addToast('Ошибка покупки эффекта', 'error');
-          throw err;
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Purchase failed');
+
+      commit(set, get, (current) => ({
+        ...current,
+        family: normalizeFamily({
+          ...current.family,
+          coins: result.newCoins,
+          ownedEffects: [...(current.family.ownedEffects || []), effect.id],
+          activeEffect: effect.id,
         }),
-        get,
-        'buyEffect',
-      );
+      }));
+      return { ok: true, alreadyOwned: false };
+    } catch (error) {
+      console.error('buyEffect error:', error);
+      get().addToast('Ошибка покупки эффекта', 'error');
+      return { ok: false, alreadyOwned: false };
     }
-    return { ok: true, alreadyOwned: false };
   },
 
   setActiveEffect: (effectId) => {
@@ -1206,10 +1212,11 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  buyBackground: (bg) => {
+  buyBackground: async (bg) => {
     const state = get();
     const member = state.getCurrentMember();
     if (!member || member.level < 7) return { ok: false, alreadyOwned: false, reason: 'level' };
+    if (!state.family?.id) return { ok: false, alreadyOwned: false, reason: 'no_family' };
     if (state.family.ownedBackgrounds?.includes(bg.id)) {
       commit(set, get, (current) => ({
         ...current,
@@ -1218,7 +1225,7 @@ export const useStore = create((set, get) => ({
           activeBackground: bg.id,
         }),
       }));
-      if (isSupabaseConfigured && state.family?.id) {
+      if (isSupabaseConfigured) {
         runRemote(
           supabase.from('families').update({ active_bg: bg.id }).eq('id', state.family.id).then(({ error }) => {
             if (error) throw error;
@@ -1236,37 +1243,35 @@ export const useStore = create((set, get) => ({
       return { ok: true, alreadyOwned: true };
     }
     if (state.family.coins < bg.price) return { ok: false, alreadyOwned: false };
-    let newFamily;
-    commit(set, get, (current) => {
-      newFamily = normalizeFamily({
-        ...current.family,
-        coins: current.family.coins - bg.price,
-        ownedBackgrounds: [...(current.family.ownedBackgrounds || []), bg.id],
-        activeBackground: bg.id,
+    
+    try {
+      const response = await fetch('/api/purchase-item', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ familyId: state.family.id, itemId: bg.id, itemType: 'background' }),
       });
-      return { ...current, family: newFamily };
-    });
-    if (isSupabaseConfigured && state.family?.id) {
-      const prevFamily = { ...state.family };
-      runRemote(
-        supabase.from('families').update({
-          owned_backgrounds: newFamily.ownedBackgrounds,
-          active_bg: newFamily.activeBackground,
-          coins: newFamily.coins,
-        }).eq('id', state.family.id).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set({ family: normalizeFamily(prevFamily) });
-          saveState(get());
-          get().addToast('Ошибка покупки фона', 'error');
-          throw err;
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Purchase failed');
+
+      commit(set, get, (current) => ({
+        ...current,
+        family: normalizeFamily({
+          ...current.family,
+          coins: result.newCoins,
+          ownedBackgrounds: [...(current.family.ownedBackgrounds || []), bg.id],
+          activeBackground: bg.id,
         }),
-        get,
-        'buyBackground',
-      );
+      }));
+      return { ok: true, alreadyOwned: false };
+    } catch (error) {
+      console.error('buyBackground error:', error);
+      get().addToast('Ошибка покупки фона', 'error');
+      return { ok: false, alreadyOwned: false };
     }
-    return { ok: true, alreadyOwned: false };
   },
 
   setActiveBackground: (bgId) => {
@@ -1286,61 +1291,55 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  buyBoost: (boost) => {
+  buyBoost: async (boost) => {
     const state = get();
     const member = state.getCurrentMember();
     if (!member || member.level < 5) return { ok: false, alreadyActive: false, reason: 'level' };
+    if (!state.family?.id) return { ok: false, alreadyActive: false, reason: 'no_family' };
     const now = Date.now();
     const expiresAt = state.family.boostExpiresAt?.[boost.id];
     const isActive = expiresAt && expiresAt > now;
-    const alreadyActive = isActive;
-
-    if (state.family.coins < boost.price) return { ok: false, alreadyActive: false };
-
     const newExpiresAt = isActive
       ? expiresAt + 24 * 60 * 60 * 1000
       : now + 24 * 60 * 60 * 1000;
-
-    const newActiveBoosts = state.family.activeBoosts?.includes(boost.id)
-      ? state.family.activeBoosts
-      : [...(state.family.activeBoosts || []), boost.id];
-
-    const newBoostExpiresAt = {
-      ...(state.family.boostExpiresAt || {}),
-      [boost.id]: newExpiresAt,
-    };
-
-    commit(set, get, (current) => ({
-      ...current,
-      family: normalizeFamily({
-        ...current.family,
-        coins: current.family.coins - boost.price,
-        activeBoosts: newActiveBoosts,
-        boostExpiresAt: newBoostExpiresAt,
-      }),
-    }));
-
-    if (isSupabaseConfigured && state.family?.id) {
-      const prevFamily = { ...state.family };
-      runRemote(
-        supabase.from('families').update({
-          active_boosts: newActiveBoosts,
-          boost_expires_at: newBoostExpiresAt,
-          coins: state.family.coins - boost.price,
-        }).eq('id', state.family.id).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set({ family: normalizeFamily(prevFamily) });
-          saveState(get());
-          get().addToast('Ошибка покупки буста', 'error');
-          throw err;
+    
+    try {
+      const response = await fetch('/api/purchase-item', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ familyId: state.family.id, itemId: boost.id, itemType: 'boost' }),
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Purchase failed');
+      
+      const newActiveBoosts = state.family.activeBoosts?.includes(boost.id)
+        ? state.family.activeBoosts
+        : [...(state.family.activeBoosts || []), boost.id];
+      const newBoostExpiresAt = {
+        ...(state.family.boostExpiresAt || {}),
+        [boost.id]: newExpiresAt,
+      };
+      
+      commit(set, get, (current) => ({
+        ...current,
+        family: normalizeFamily({
+          ...current.family,
+          coins: result.newCoins,
+          activeBoosts: newActiveBoosts,
+          boostExpiresAt: newBoostExpiresAt,
         }),
-        get,
-        'buyBoost',
-      );
+      }));
+      
+      return { ok: true, alreadyActive: isActive };
+    } catch (error) {
+      console.error('buyBoost error:', error);
+      get().addToast('Ошибка покупки буста', 'error');
+      return { ok: false, alreadyActive: false };
     }
-    return { ok: true, alreadyActive };
   },
 
 
@@ -1367,11 +1366,15 @@ export const useStore = create((set, get) => ({
     return activeBoosts;
   },
 
-  buyReward: (rewardId) => {
+  buyReward: async (rewardId) => {
     const state = get();
     if ((state.family?.guild_level ?? 1) < 5) return { ok: false, reason: 'guild_level' };
+    if (!state.family?.id) return { ok: false, reason: 'no_family' };
     const reward = REAL_REWARDS.find((r) => r.id === rewardId);
     if (!reward) return { ok: false, reason: 'not_found' };
+
+    const member = state.getCurrentMember();
+    if (!member) return { ok: false, reason: 'no_member' };
 
     const cat = REWARD_CATEGORIES.find((c) => c.value === reward.category);
     const cooldownMs = cat?.cooldownDays ? cat.cooldownDays * 24 * 60 * 60 * 1000 : 0;
@@ -1388,124 +1391,61 @@ export const useStore = create((set, get) => ({
       }
     }
 
-    const member = state.getCurrentMember();
-    if (!member) return { ok: false, reason: 'no_member' };
-
-    const notifyOthers = () => {
-      const currentState = get();
-      const buyerName = currentState.getCurrentMember()?.name || 'Кто-то';
-      if (currentState.family?.id) {
-        const headers = { 'Content-Type': 'application/json' };
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.access_token) {
-            headers['Authorization'] = `Bearer ${session.access_token}`;
-          }
-           fetch('/api/notify-reward', {
-             method: 'POST',
-             headers,
-             body: JSON.stringify({
-               action: 'notify',
-               familyId: currentState.family.id,
-               rewardId: rewardId,
-               buyerId: member.id,
-               excludeMemberId: currentState.getMemberId?.(),
-             }),
-           }).catch(() => {});
-
-        });
-      }
-    };
-
-    if (reward.price < 0) {
-      const earned = Math.abs(reward.price);
-      const coins = (state.family?.coins ?? 0) + earned;
-      const prevFamily = { ...state.family };
-      commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
-      const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
-      commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
-      if (isSupabaseConfigured && state.family?.id) {
-        runRemote(
-          Promise.all([
-            supabase.from('purchased_rewards').insert({
-              id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
-            }),
-            supabase.from('families').update({ coins }).eq('id', state.family.id)
-          ]).then(({ error }) => {
-            if (error) throw error;
-            return null;
-          }).catch(err => {
-            set((state) => ({ ...state, family: normalizeFamily(prevFamily), purchasedRewards: state.purchasedRewards.filter(r => r.id !== entry.id) }));
-            saveState(get());
-            get().addToast('Ошибка начисления награды', 'error');
-            throw err;
-          }),
-          get,
-          'buyReward'
-        );
-      }
-      notifyOthers();
-      return { ok: true, earned };
-    }
-
-    if (reward.price === 0) {
-      const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
-      commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
-      if (isSupabaseConfigured && state.family?.id) {
-        runRemote(
-          supabase.from('purchased_rewards').insert({
-            id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
-          }).then(({ error }) => {
-            if (error) throw error;
-            return null;
-          }).catch(err => {
-            set((state) => ({ ...state, purchasedRewards: state.purchasedRewards.filter(r => r.id !== entry.id) }));
-            saveState(get());
-            get().addToast('Ошибка получения бесплатной награды', 'error');
-            throw err;
-          }),
-          get,
-          'buyReward'
-        );
-      }
-      notifyOthers();
-      return { ok: true, free: true };
-    }
-
-    if ((state.family?.coins ?? 0) < reward.price) return { ok: false, reason: 'insufficient_coins' };
-
-    const coins = state.family.coins - reward.price;
-    const prevFamily = { ...state.family };
-    commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
-
-    const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
-    commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
-
-    if (isSupabaseConfigured && state.family?.id) {
-      runRemote(
-        Promise.all([
-          supabase.from('purchased_rewards').insert({
-            id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
-          }),
-          supabase.from('families').update({ coins }).eq('id', state.family.id)
-        ]).then(({ error }) => {
-          if (error) throw error;
-          return null;
-        }).catch(err => {
-          set((state) => ({ 
-            ...state, 
-            family: normalizeFamily(prevFamily), 
-            purchasedRewards: state.purchasedRewards.filter(r => r.id !== entry.id) 
-          }));
-          saveState(get());
-          get().addToast('Ошибка покупки награды', 'error');
-          throw err;
+    try {
+      const response = await fetch('/api/purchase-reward', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          familyId: state.family.id,
+          rewardId,
+          buyerId: member.id,
+          price: reward.price,
         }),
-        get,
-        'buyReward'
-      );
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to purchase reward');
+
+      const entry = { 
+        id: uuidv4(), family_id: state.family.id, reward_id: rewardId, 
+        purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' 
+      };
+
+      commit(set, get, (current) => {
+        const nextFamily = result.newCoins !== undefined
+          ? normalizeFamily({ ...current.family, coins: result.newCoins })
+          : current.family;
+        return {
+          ...current,
+          family: nextFamily,
+          purchasedRewards: [entry, ...current.purchasedRewards],
+        };
+      });
+
+      // Notify other members
+      fetch('/api/notify-reward', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          action: 'notify',
+          familyId: state.family.id,
+          rewardId,
+          buyerId: member.id,
+          excludeMemberId: state.getMemberId?.(),
+        }),
+      }).catch(() => {});
+
+      return { ok: true, ...result };
+    } catch (error) {
+      console.error('buyReward error:', error);
+      get().addToast('Ошибка покупки награды', 'error');
+      return { ok: false, error };
     }
-    notifyOthers();
-    return { ok: true, spent: reward.price };
   },
 
   getBoostMultiplier: (boostType) => {
@@ -1521,34 +1461,35 @@ export const useStore = create((set, get) => ({
     return multiplier;
   },
 
-  claimDailyBonus: () => {
+  claimDailyBonus: async () => {
     const date = todayKey();
     const state = get();
-    if (state.family?.dailyBonusClaimedAt === date) return false;
-    const coins = state.family.coins + 20;
-    commit(set, get, (current) => ({
-      ...current,
-      family: normalizeFamily({
-        ...current.family,
-        coins,
-        dailyBonusClaimedAt: date,
-        last_login_date: date,
-        login_streak: (current.family.login_streak ?? 0) + 1,
-      }),
-    }));
-
-    if (isSupabaseConfigured) {
-      runRemote(
-        supabase
-          .from('families')
-          .update({ coins, last_login_date: date, login_streak: (state.family.login_streak ?? 0) + 1 })
-          .eq('id', state.family.id)
-          .then(({ error }) => (error ? Promise.reject(error) : null)),
-        get,
-        'claimDailyBonus',
-      );
+    if (!state.family?.id) return { ok: false, reason: 'no_family' };
+    if (state.family?.dailyBonusClaimedAt === date) return { ok: false, reason: 'already_claimed' };
+    
+    try {
+      const response = await fetch('/api/claim-daily-bonus', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ familyId: state.family.id, date }),
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to claim bonus');
+      
+      commit(set, get, (current) => ({ 
+        ...current, 
+        family: normalizeFamily({ ...current.family, coins: result.newCoins, dailyBonusClaimedAt: date }) 
+      }));
+      return { ok: true };
+    } catch (error) {
+      console.error('claimDailyBonus error:', error);
+      get().addToast('Ошибка при получении бонуса', 'error');
+      return { ok: false, error };
     }
-    return true;
   },
 
   addToast: (message, type = 'info', data = null) => {
@@ -1696,17 +1637,22 @@ export const useStore = create((set, get) => ({
     const state = get();
     const fromCollection = state.memberCollections[fromMemberId] || [];
     const toCollection = state.memberCollections[toMemberId] || [];
+    const prevCollections = { 
+      [fromMemberId]: [...fromCollection], 
+      [toMemberId]: [...toCollection] 
+    };
+    const prevMemberCollections = { ...state.memberCollections };
 
     const fromItem = fromCollection.find((c) => c.cardId === cardId);
     if (!fromItem || fromItem.count < count) {
       return { ok: false, reason: 'not_enough_cards' };
     }
-
+    
     commit(set, get, (state) => {
       const newFromCollection = fromCollection.map((c) => 
         c.cardId === cardId ? { ...c, count: c.count - count } : c
       ).filter((c) => c.count > 0);
-
+    
       const existingToItem = toCollection.find((c) => c.cardId === cardId);
       let newToCollection;
       if (existingToItem) {
@@ -1716,7 +1662,7 @@ export const useStore = create((set, get) => ({
       } else {
         newToCollection = [...toCollection, { cardId, card_id: cardId, count, stars: fromItem.stars, isNew: true, addedAt: Date.now() }];
       }
-
+    
       return {
         ...state,
         memberCollections: {
@@ -1726,7 +1672,7 @@ export const useStore = create((set, get) => ({
         },
       };
     });
-
+    
     if (isSupabaseConfigured && fromMemberId && toMemberId) {
       try {
         const { error: rpcError } = await supabase.rpc('transfer_card', {
@@ -1738,10 +1684,15 @@ export const useStore = create((set, get) => ({
         if (rpcError) throw rpcError;
       } catch (error) {
         console.error('transferCard sync error:', error);
-        get().addToast?.('Ошибка синхронизации передачи карты', 'error');
+        commit(set, get, (state) => ({
+          ...state,
+          memberCollections: prevMemberCollections,
+        }));
+        get().addToast?.('Ошибка синхронизации передачи карты. Изменения отменены.', 'error');
+        return { ok: false, reason: 'sync_error' };
       }
     }
-
+    
     return { ok: true };
   },
 
@@ -1752,19 +1703,21 @@ export const useStore = create((set, get) => ({
     const recipient = members.find((m) => m.id === recipientId);
     if (!initiator || initiator.level < 7) return { ok: false, reason: 'initiator_level' };
     if (!recipient || recipient.level < 7) return { ok: false, reason: 'recipient_level' };
-
+    
     const initiatorCollection = memberCollections[currentMemberId] || [];
     const offeredItem = initiatorCollection.find((c) => c.cardId === offeredCardId);
     if (!offeredItem || offeredItem.count < 1) return { ok: false, reason: 'no_card' };
-
+    
     const countToday = await get().getExchangesCountToday(currentMemberId);
     if (countToday >= 3) return { ok: false, reason: 'daily_limit' };
+    const prevMemberCollections = { ...memberCollections };
+
 
     commit(set, get, (state) => {
       const newInitiatorCollection = state.memberCollections[currentMemberId]?.map((c) =>
         c.cardId === offeredCardId ? { ...c, count: c.count - 1 } : c
       ).filter((c) => c.count > 0) || [];
-
+    
       const exchange = normalizeExchange({
         id: uuidv4(),
         family_id: family.id,
@@ -1775,7 +1728,7 @@ export const useStore = create((set, get) => ({
         status: 'pending',
         created_at: new Date().toISOString(),
       });
-
+    
       return {
         ...state,
         memberCollections: {
@@ -1785,7 +1738,7 @@ export const useStore = create((set, get) => ({
         exchanges: [exchange, ...state.exchanges],
       };
     });
-
+    
     if (isSupabaseConfigured) {
       try {
         await supabase.from('card_exchanges').insert({
@@ -1796,7 +1749,7 @@ export const useStore = create((set, get) => ({
           requested_card_id: requestedCardId,
           status: 'pending',
         });
-
+    
         const today = new Date().toISOString().split('T')[0];
         await supabase.from('member_exchange_limits').upsert(
           { member_id: currentMemberId, date: today, exchanges_count: countToday + 1 },
@@ -1804,9 +1757,15 @@ export const useStore = create((set, get) => ({
         );
       } catch (error) {
         console.error('proposeExchange sync error:', error);
+        commit(set, get, (state) => ({
+          ...state,
+          memberCollections: prevMemberCollections,
+        }));
+        get().addToast?.('Ошибка синхронизации обмена. Изменения отменены.', 'error');
+        return { ok: false, reason: 'sync_error' };
       }
     }
-
+    
     get().addToast('Предложение об отправлено!', 'success');
     return { ok: true };
   },
