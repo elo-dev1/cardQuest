@@ -159,7 +159,6 @@ export const DefeatScreen = ({ bossName, bossEmoji = '🐲', onClose }) => {
 
         <div className="mt-4 rounded-[var(--r-lg)] bg-[var(--bg-elevated)] px-8 py-4 text-center">
           <p className="text-xl font-semibold text-[var(--text-primary)]">Новая неделя — новый шанс.</p>
-          <p className="mt-1 text-sm font-medium text-[var(--text-secondary)]">HP босса уменьшено на 10%</p>
         </div>
 
         <button

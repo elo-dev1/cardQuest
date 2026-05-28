@@ -62,20 +62,26 @@ export const generateInviteCode = async (familyId, createdBy, options = {}) => {
     }).code;
   }
 
-  const { data: rpcCode, error: rpcError } = await supabase.rpc('generate_invite_code');
-  if (rpcError) console.warn('generate_invite_code rpc failed:', rpcError.message);
-  const code = rpcCode || makeCode();
+  let code;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: rpcCode, error: rpcError } = await supabase.rpc('generate_invite_code');
+    if (rpcError) console.warn('generate_invite_code rpc failed:', rpcError.message);
+    code = rpcCode || makeCode();
 
-  const { error } = await supabase.from('invitations').insert({
-    family_id: familyId,
-    code,
-    created_by: createdBy,
-    max_uses: options.maxUses ?? 1,
-    expires_at: makeExpiresAt(options.days ?? 7),
-  });
-  if (error) throw error;
+    const { error: insertError } = await supabase.from('invitations').insert({
+      family_id: familyId,
+      code,
+      created_by: createdBy,
+      max_uses: options.maxUses ?? 1,
+      expires_at: makeExpiresAt(options.days ?? 7),
+    });
 
-  return code;
+    if (!insertError) return code;
+    if (insertError.code === '23505') continue;
+    throw insertError;
+  }
+
+  throw new Error('Не удалось сгенерировать уникальный код приглашения после 3 попыток');
 };
 
 export const generateMultiInviteCode = async (familyId, createdBy, maxUses = 5) =>

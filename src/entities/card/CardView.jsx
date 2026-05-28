@@ -29,7 +29,7 @@ export const CardView = ({ card, count = 0, stars = 0, isNew = false, size = 'sm
       >
         <div className="grid h-[65%] place-items-center text-3xl" style={{ filter: 'grayscale(0.7)' }}>❓</div>
         <div className="grid h-[35%] place-items-center bg-[var(--bg-surface)] px-2 text-center text-[11px] font-semibold">
-          Не найдена
+          ???
         </div>
       </button>
     );

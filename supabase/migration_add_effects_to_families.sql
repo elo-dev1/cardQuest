@@ -1,3 +1,0 @@
-ALTER TABLE families
-  ADD COLUMN IF NOT EXISTS owned_effects TEXT[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS active_effect TEXT DEFAULT NULL;

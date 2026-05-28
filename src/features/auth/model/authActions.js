@@ -19,6 +19,15 @@ const writeJson = (key, value) => {
   window.localStorage.setItem(key, JSON.stringify(value));
 };
 
+const hashPassword = async (password) => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+const isHashed = (str) => /^[a-f0-9]{64}$/.test(str);
+
 const notifyLocalAuth = () => {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new Event(LOCAL_AUTH_EVENT));
@@ -38,10 +47,11 @@ export const authActions = {
       if (users.some((user) => user.email.toLowerCase() === email.toLowerCase())) {
         throw new Error('Пользователь с таким email уже есть в локальном демо-режиме');
       }
+      const hashed = await hashPassword(password);
       const user = {
         id: uuidv4(),
         email,
-        password,
+        password: hashed,
         displayName,
         createdAt: new Date().toISOString(),
       };
@@ -74,8 +84,20 @@ export const authActions = {
   signIn: async ({ email, password }) => {
     if (!isSupabaseConfigured) {
       const users = readJson(LOCAL_USERS_KEY, []);
-      const user = users.find((item) => item.email.toLowerCase() === email.toLowerCase() && item.password === password);
+      const user = users.find((item) => item.email.toLowerCase() === email.toLowerCase());
       if (!user) throw new Error('Локальный пользователь не найден. Создайте аккаунт на вкладке регистрации.');
+
+      const storedPw = user.password;
+      const inputHash = isHashed(storedPw) ? await hashPassword(password) : password;
+      if (storedPw !== inputHash) throw new Error('Неверный пароль');
+
+      if (!isHashed(storedPw)) {
+        const hashed = await hashPassword(storedPw);
+        user.password = hashed;
+        const updated = users.map(u => u.id === user.id ? user : u);
+        writeJson(LOCAL_USERS_KEY, updated);
+      }
+
       setLocalAuthUser(user);
       return { user, session: { user } };
     }

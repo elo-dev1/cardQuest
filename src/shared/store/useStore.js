@@ -9,12 +9,12 @@ import { getActiveSynergies } from '@/shared/data/synergies';
 
 import { normalizeFamily, getStreakCalc } from '@/entities/family/model/familyLogic';
 import { normalizeMember } from '@/entities/member/model/memberLogic';
-import { normalizeTask } from '@/entities/task/model/taskLogic';
-import { normalizeCompletion } from '@/entities/task/model/completionLogic';
-import { normalizeReward, getRewardForTask } from '@/entities/task/model/rewardLogic';
-import { normalizeCollectionItem, normalizeMemberCollections } from '@/entities/collection/model/collectionLogic';
+import { normalizeMemberCollections, normalizeCollectionItem } from '@/entities/collection/model/collectionLogic';
 import { normalizeExchange } from '@/entities/exchange/model/exchangeLogic';
-import { defaultBoss, normalizeBoss, calculateBossDamage, getBossDeckForMember, DIFFICULTY_DAMAGE } from '@/entities/boss/model/bossLogic';
+import { normalizeTask } from '@/shared/logic/taskLogic';
+import { normalizeCompletion } from '@/shared/logic/completionLogic';
+import { normalizeReward, getRewardForTask } from '@/shared/logic/rewardLogic';
+import { defaultBoss, normalizeBoss, calculateBossDamage, getBossDeckForMember, DIFFICULTY_DAMAGE } from '@/shared/logic/bossLogic';
 import { REAL_REWARDS, REWARD_CATEGORIES } from '@/shared/data/realRewards';
 
 const STORAGE_KEY = 'card-quest-state-v1';
@@ -111,7 +111,8 @@ const loadState = () => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return baseState;
     return normalizeState(JSON.parse(raw));
-  } catch {
+  } catch (e) {
+    console.warn('[useStore] Не удалось прочитать сохранённое состояние из localStorage. Возможно, данные повреждены.', e);
     return baseState;
   }
 };
@@ -135,6 +136,7 @@ const makeTasks = (familyId = null, createdBy = null) =>
   );
 
 const xpToLevel = (xp = 0) => Math.max(1, Math.floor(xp / 120) + 1);
+const guildXpToLevel = (xp = 0) => Math.max(1, Math.floor(xp / 500) + 1);
 
 const completionMatches = (item, taskId, memberId, date) =>
   (item.taskId ?? item.task_id) === taskId && (item.memberId ?? item.member_id) === memberId && item.date === date;
@@ -176,9 +178,15 @@ const familyPatchToDb = (patch) => {
     dbPatch.active_bg = dbPatch.activeBackground;
     delete dbPatch.activeBackground;
   }
+  if ('ownedItems' in dbPatch) {
+    dbPatch.owned_items = dbPatch.ownedItems;
+    delete dbPatch.ownedItems;
+  }
+  if ('equippedItems' in dbPatch) {
+    dbPatch.equipped_items = dbPatch.equippedItems;
+    delete dbPatch.equippedItems;
+  }
   delete dbPatch.dailyBonusClaimedAt;
-  delete dbPatch.ownedItems;
-  delete dbPatch.equippedItems;
   return dbPatch;
 };
 
@@ -384,7 +392,7 @@ export const useStore = create((set, get) => ({
       const { data: battleDeckRows } = selectedMember
         ? await supabase
             .from('battle_deck')
-            .select('slot, card_id')
+            .select('slot, card_id, member_id')
             .eq('family_id', family.id)
             .order('slot', { ascending: true })
         : { data: [] };
@@ -392,7 +400,8 @@ export const useStore = create((set, get) => ({
       const bossDeckMap = {};
       safeArray(battleDeckRows).forEach((row) => {
         if (row.slot >= 1 && row.slot <= 4 && row.card_id) {
-          bossDeckMap[row.slot - 1] = row.card_id;
+          if (!bossDeckMap[row.member_id]) bossDeckMap[row.member_id] = [];
+          bossDeckMap[row.member_id][row.slot - 1] = row.card_id;
         }
       });
       const indexed = Object.values(bossDeckMap);
@@ -413,6 +422,10 @@ export const useStore = create((set, get) => ({
         .eq('family_id', family.id)
         .order('purchased_at', { ascending: false });
 
+      const lastBossIdleAttackAt = bossWeek?.last_attack_at
+        ? new Date(bossWeek.last_attack_at).getTime()
+        : null;
+
       const normalized = normalizeState({
         authUserId: userId,
         family,
@@ -430,6 +443,7 @@ export const useStore = create((set, get) => ({
         currentMemberId: selectedMember?.id,
         theme: get().theme,
         defeatedBosses: safeArray(defeatedBosses),
+        lastBossIdleAttackAt,
       });
 
       set({ ...normalized, isLoading: false, isSetupDone: true });
@@ -678,6 +692,10 @@ export const useStore = create((set, get) => ({
   },
 
   addTask: (task) => {
+    if (!task.title?.trim()) return { ok: false, reason: 'empty_title' };
+    if (!task.category) return { ok: false, reason: 'empty_category' };
+    if (!task.difficulty) task.difficulty = 'easy';
+
     const { family, currentMemberId } = get();
     const newTask = normalizeTask({
       id: uuidv4(),
@@ -705,6 +723,13 @@ export const useStore = create((set, get) => ({
             const normalized = normalizeTask(data);
             set((state) => ({ ...state, tasks: state.tasks.map((item) => (item.id === newTask.id ? normalized : item)) }));
             saveState(get());
+          })
+          .catch(async (err) => {
+            console.error('addTask sync error:', err);
+            set((state) => ({ ...state, tasks: state.tasks.filter(t => t.id !== newTask.id) }));
+            saveState(get());
+            get().addToast('Не удалось сохранить задачу на сервере. Она была удалена.', 'error');
+            throw err;
           }),
         get,
         'addTask',
@@ -713,6 +738,8 @@ export const useStore = create((set, get) => ({
   },
 
   deleteTask: (id) => {
+    const previousTasks = get().tasks;
+    const previousCompletions = get().completions;
     commit(set, get, (state) => ({
       ...state,
       tasks: state.tasks.filter((task) => task.id !== id),
@@ -720,60 +747,69 @@ export const useStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured) {
-      runRemote(supabase.from('tasks').delete().eq('id', id).then(({ error }) => (error ? Promise.reject(error) : null)), get, 'deleteTask');
+      runRemote(
+        supabase.from('tasks').delete().eq('id', id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set({ tasks: previousTasks, completions: previousCompletions });
+          saveState(get());
+          get().addToast('Не удалось удалить задачу на сервере.', 'error');
+          throw err;
+        }), 
+        get, 
+        'deleteTask'
+      );
     }
   },
 
   completeTask: async (taskId, memberId) => {
     const state = get();
-    const date = todayKey();
-    const task = state.tasks.find((item) => item.id === taskId);
-    const member = state.members.find((item) => item.id === memberId);
-    if (!task || !member) return { wasNewReward: false, reward: { xp: 0, coins: 0, damage: 0 } };
-    if (completedOnDate(state.completions, taskId, memberId, date)) {
-      return { wasNewReward: false, reward: getRewardForTask(task, member, get) };
-    }
+    const { family } = state;
+    if (!family?.id) return { ok: false, reason: 'no_family' };
 
-    const reward = getRewardForTask(task, member, get);
-    const { damage, isCrit } = calculateBossDamage(task, member, state, memberId, get);
-    const wasAlreadyAwarded = awardedOnDate(state.rewardsAwarded, taskId, memberId, date);
-    const completion = normalizeCompletion({ id: uuidv4(), taskId, memberId, date, completed_at: new Date().toISOString() });
-    const award = normalizeReward({ id: uuidv4(), taskId, memberId, date, xp_given: reward.xp, coins_given: reward.coins });
+    try {
+      const response = await fetch('/api/complete-task', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ taskId, memberId, familyId: family.id }),
+      });
 
-    let newMember = member;
-    let newFamily = state.family;
-    let newBoss = state.boss;
-    let phaseTriggered = false;
-    let phaseChanged = false;
+      const result = await response.json();
+      if (!response.ok) {
+        if (result.alreadyDone) {
+          return { wasNewReward: false, reward: getRewardForTask(state.tasks.find(t => t.id === taskId), state.members.find(m => m.id === memberId), get) };
+        }
+        throw new Error(result.error || 'Failed to complete task');
+      }
 
-    commit(set, get, (current) => {
-      const members = wasAlreadyAwarded
-        ? current.members
-        : current.members.map((item) => {
-            if (item.id !== memberId) return item;
-            const xp = item.xp + reward.xp;
-            newMember = { ...item, xp, level: xpToLevel(xp), total_tasks: (item.total_tasks ?? 0) + 1 };
-            return newMember;
-          });
+      // Update local state based on server result
+      const { reward, damage, isCrit, newHp } = result;
+      const member = state.members.find((item) => item.id === memberId);
+      const task = state.tasks.find((item) => item.id === taskId);
 
-      const family = wasAlreadyAwarded
-        ? current.family
-        : normalizeFamily({
-            ...current.family,
-            coins: current.family.coins + reward.coins,
-            guild_xp: current.family.guild_xp + reward.xp,
-            guild_level: xpToLevel(current.family.guild_xp + reward.xp),
-          });
-      newFamily = family;
+      commit(set, get, (current) => {
+        const members = current.members.map((item) => {
+          if (item.id !== memberId) return item;
+          const xp = item.xp + reward.xp;
+          return { ...item, xp, level: xpToLevel(xp), total_tasks: (item.total_tasks ?? 0) + 1 };
+        });
 
-      if (wasAlreadyAwarded) {
-        newBoss = current.boss;
-      } else {
+        const family = normalizeFamily({
+          ...current.family,
+          coins: current.family.coins + reward.coins,
+          guild_xp: current.family.guild_xp + reward.xp,
+          guild_level: guildXpToLevel(current.family.guild_xp + reward.xp),
+        });
+
         const prevHp = current.boss.hp;
-        const nextHp = Math.max(0, prevHp - damage);
+        const nextHp = newHp ?? Math.max(0, prevHp - damage);
         const nextPhase = nextHp <= current.boss.maxHp / 2 ? 2 : 1;
-        phaseTriggered = nextPhase === 2 && current.boss.phase !== 2;
-        phaseChanged = nextPhase !== current.boss.phase;
+        const phaseTriggered = nextPhase === 2 && current.boss.phase !== 2;
+        const phaseChanged = nextPhase !== current.boss.phase;
 
         const logType = isCrit ? 'crit' : 'damage';
         const logText = isCrit
@@ -792,154 +828,36 @@ export const useStore = create((set, get) => ({
             ]
           : newLogs;
 
-        newBoss = {
-          ...current.boss,
-          hp: nextHp,
-          phase: nextPhase,
-          damageByMember: {
-            ...current.boss.damageByMember,
-            [memberId]: (current.boss.damageByMember?.[memberId] || 0) + damage,
+        return {
+          ...current,
+          completions: [...current.completions, { id: uuidv4(), taskId, memberId, date: todayKey(), completed_at: new Date().toISOString() }],
+          rewardsAwarded: [...current.rewardsAwarded, { id: uuidv4(), taskId, memberId, date: todayKey(), xp_given: reward.xp, coins_given: reward.coins }],
+          members,
+          family,
+          boss: {
+            ...current.boss,
+            hp: nextHp,
+            phase: nextPhase,
+            logs: newLogsWithPhase,
           },
-          damageByMemberToday: {
-            ...current.boss.damageByMemberToday,
-            [memberId]: (current.boss.damageByMemberToday?.[memberId] || 0) + damage,
-          },
-          logs: newLogsWithPhase,
+          lastTaskCompletedAt: Date.now(),
+          lastBossIdleAttackAt: null,
         };
-      }
+      });
 
-      return {
-        ...current,
-        completions: [...current.completions, completion],
-        rewardsAwarded: wasAlreadyAwarded ? current.rewardsAwarded : [...current.rewardsAwarded, award],
-        members,
-        family,
-        boss: newBoss,
-        lastTaskCompletedAt: Date.now(),
-        lastBossIdleAttackAt: null,
-      };
-    });
-
-    if (isSupabaseConfigured) {
-      try {
-        const { error: completionError } = await supabase.from('completions').insert({
-          task_id: taskId,
-          member_id: memberId,
-          date,
-        });
-        if (completionError && completionError.code !== '23505') throw completionError;
-
-        if (!wasAlreadyAwarded) {
-          const { error: rewardError } = await supabase.from('rewards_awarded').insert({
-            task_id: taskId,
-            member_id: memberId,
-            date,
-            xp_given: reward.xp,
-            coins_given: reward.coins,
-           });
-           if (rewardError && rewardError.code !== '23505') throw rewardError;
-
-           await supabase
-             .from('members')
-             .update({
-               xp: newMember.xp,
-               level: newMember.level,
-               total_tasks: newMember.total_tasks,
-             })
-             .eq('id', memberId);
-           await supabase.from('families').update(familyPatchToDb({
-             coins: newFamily.coins,
-             guild_xp: newFamily.guild_xp,
-             guild_level: newFamily.guild_level,
-           })).eq('id', newFamily.id);
-
-           let { data: activeBossWeek } = await supabase
-             .from('boss_weeks')
-             .select('id, boss_hp_cur, is_won')
-             .eq('family_id', newFamily.id)
-             .eq('week_start', getWeekStartKey())
-             .maybeSingle();
-
-            if (activeBossWeek?.is_won) {
-              activeBossWeek = null;
-            }
-
-            if (activeBossWeek) {
-              const newHp = Math.max(0, newBoss.hp);
-
-             await supabase
-               .from('boss_weeks')
-               .update({ boss_hp_cur: newHp })
-              .eq('id', activeBossWeek.id);
-
-               const { error: bossDamageError } = await supabase
-                 .from('boss_damage')
-                 .insert({
-                   boss_week_id: activeBossWeek.id,
-                   member_id: memberId,
-                   date,
-                   damage,
-                   damage_today: damage,
-                 });
-               if (bossDamageError && bossDamageError.code !== '23505') throw bossDamageError;
-
-               const logType = isCrit ? 'crit' : 'damage';
-               const logText = isCrit
-                 ? `💥 ${member.name} нанёс КРИТ! → ${damage} урона!`
-                 : `⚔️ ${member.name} выполнил «${task.title}» → ${damage} урона`;
-
-               await supabase
-                 .from('boss_logs')
-                 .insert({
-                   boss_week_id: activeBossWeek.id,
-                   member_id: memberId,
-                   log_type: logType,
-                   log_text: logText,
-                   damage_amount: damage,
-                 });
-
-               if (phaseTriggered) {
-                 await supabase
-                   .from('boss_logs')
-                   .insert({
-                     boss_week_id: activeBossWeek.id,
-                     member_id: memberId,
-                     log_type: 'phase',
-                     log_text: `⚠️ ${get().boss.name} входит в ярость! Теперь атакует дважды!`,
-                     damage_amount: 0,
-                   });
-               }
-            }
-        }
-      } catch (error) {
-        console.error('completeTask sync error:', error);
-        get().addToast('Награда начислена локально, но Supabase не синхронизировался.', 'error');
-      }
-    }
-
-    if (!wasAlreadyAwarded && (phaseChanged || newBoss.hp === 0)) {
-      setTimeout(() => {
-        if (phaseTriggered) {
-          get().addToast(`⚠️ ${newBoss.name} разъярён! Он становится опаснее!`, 'boss_phase');
-        }
-        if (newBoss.hp === 0) {
-          get().triggerVictory();
-        }
-      }, 500);
-    }
-
-    if (!wasAlreadyAwarded) {
-      const toastMsg = isCrit
-        ? `💥 КРИТ! ${damage} урона!`
-        : `⚔️ ${damage} урона по боссу!`;
-      const toastType = isCrit ? 'crit' : 'damage';
-      get().setLastDamageEvent({ damage, isCrit });
       if (damage > 0) {
-        get().addToast(toastMsg, toastType);
+        get().setLastDamageEvent({ damage, isCrit });
+        get().addToast(isCrit ? `💥 КРИТ! ${damage} урона!` : `⚔️ ${damage} урона по боссу!`, isCrit ? 'crit' : 'damage');
       }
-    }
+      
+      if (newHp === 0) get().triggerVictory();
 
-    return { wasNewReward: !wasAlreadyAwarded, reward, damage, isCrit, boss: newBoss };
+      return { wasNewReward: true, reward, damage, isCrit };
+    } catch (error) {
+      console.error('completeTask error:', error);
+      get().addToast('Ошибка при выполнении задачи', 'error');
+      return { ok: false, error };
+    }
   },
 
   uncompleteTask: async (taskId, memberId) => {
@@ -999,7 +917,28 @@ export const useStore = create((set, get) => ({
         supabase
           .from('member_collections')
           .upsert({ member_id: targetMemberId, card_id: cardId, count: nextCount }, { onConflict: 'member_id,card_id' })
-          .then(({ error }) => (error ? Promise.reject(error) : null)),
+          .then(({ error }) => {
+            if (error) throw error;
+            return null;
+          })
+          .catch(async (err) => {
+            const memberColl = get().memberCollections[targetMemberId] || [];
+            const current = memberColl.find((item) => item.cardId === cardId);
+            const rolledBackCount = current ? current.count - 1 : 0;
+            
+            set((state) => ({
+              ...state,
+              memberCollections: {
+                ...state.memberCollections,
+                [targetMemberId]: memberColl.map((item) => 
+                  item.cardId === cardId ? { ...item, count: rolledBackCount } : item
+                ).filter(item => item.count > 0)
+              }
+            }));
+            saveState(get());
+            get().addToast('Ошибка синхронизации коллекции', 'error');
+            throw err;
+          }),
         get,
         'addCardToCollection',
       );
@@ -1008,11 +947,12 @@ export const useStore = create((set, get) => ({
     return result;
   },
 
-  upgradeCard: (cardId, memberId = null) => {
+  upgradeCard: async (cardId, memberId = null) => {
     const state = get();
     const targetMemberId = memberId || state.currentCollectionMember || state.currentMemberId;
     const { family } = state;
     
+    if (!family?.id) return { ok: false, reason: 'no_family' };
     if ((family?.guild_level ?? 1) < 5) return { ok: false, reason: 'guild_level' };
     if (!targetMemberId) return { ok: false, reason: 'no_member' };
     
@@ -1027,31 +967,36 @@ export const useStore = create((set, get) => ({
     if (item.count < cost.required) return { ok: false, reason: 'not_enough_copies' };
     if ((family?.coins ?? 0) < cost.costCoins) return { ok: false, reason: 'not_enough_coins' };
 
-    const newCount = item.count - cost.required;
-    commit(set, get, (state) => ({
-      ...state,
-      memberCollections: {
-        ...state.memberCollections,
-        [targetMemberId]: (state.memberCollections[targetMemberId] || []).map((c) =>
-          c.cardId === cardId ? { ...c, count: newCount, stars: nextStars } : c,
-        ),
-      },
-      family: normalizeFamily({ ...state.family, coins: state.family.coins - cost.costCoins }),
-    }));
+    try {
+      const response = await fetch('/api/upgrade-card', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ cardId, memberId: targetMemberId, familyId: family.id }),
+      });
 
-    if (isSupabaseConfigured && targetMemberId) {
-      runRemote(
-        supabase
-          .from('member_collections')
-          .upsert({ member_id: targetMemberId, card_id: cardId, count: newCount, stars: nextStars }, { onConflict: 'member_id,card_id' })
-          .then(({ error }) => (error ? Promise.reject(error) : null)),
-        get,
-        'upgradeCard',
-      );
-      runRemote(supabase.from('families').update({ coins: family.coins - cost.costCoins }).eq('id', family.id).then(({ error }) => (error ? Promise.reject(error) : null)), get, 'upgradeCard coins');
+      const result = await response.json();
+      if (!response.ok) return { ok: false, reason: result.error || 'api_error' };
+
+      const newCount = item.count - cost.required;
+      commit(set, get, (state) => ({
+        ...state,
+        memberCollections: {
+          ...state.memberCollections,
+          [targetMemberId]: (state.memberCollections[targetMemberId] || []).map((c) =>
+            c.cardId === cardId ? { ...c, count: newCount, stars: nextStars } : c,
+          ),
+        },
+        family: normalizeFamily({ ...state.family, coins: state.family.coins - cost.costCoins }),
+      }));
+
+      return { ok: true, stars: nextStars };
+    } catch (error) {
+      console.error('upgradeCard error:', error);
+      return { ok: false, reason: 'api_error' };
     }
-
-    return { ok: true, stars: nextStars };
   },
 
   markCardsSeen: (memberId = null) => {
@@ -1072,10 +1017,23 @@ export const useStore = create((set, get) => ({
     const state = get();
     if (!state.family || state.family.coins < amount) return false;
     const coins = state.family.coins - amount;
+    const prevCoins = state.family.coins;
     commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
 
     if (isSupabaseConfigured) {
-      runRemote(supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)), get, 'spendCoins');
+      runRemote(
+        supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set((state) => ({ ...state, family: normalizeFamily({ ...state.family, coins: prevCoins }) }));
+          saveState(get());
+          get().addToast('Ошибка при списании монет', 'error');
+          throw err;
+        }), 
+        get, 
+        'spendCoins'
+      );
     }
     return true;
   },
@@ -1083,34 +1041,88 @@ export const useStore = create((set, get) => ({
   addCoins: (amount) => {
     const state = get();
     const coins = (state.family?.coins ?? 0) + amount;
+    const prevCoins = state.family?.coins ?? 0;
     commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
     if (isSupabaseConfigured && state.family?.id) {
-      runRemote(supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)), get, 'addCoins');
+      runRemote(
+        supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set((state) => ({ ...state, family: normalizeFamily({ ...state.family, coins: prevCoins }) }));
+          saveState(get());
+          get().addToast('Ошибка при начислении монет', 'error');
+          throw err;
+        }), 
+        get, 
+        'addCoins'
+      );
     }
   },
 
   buyItem: (item) => {
     const state = get();
     if (state.family.ownedItems?.includes(item.id)) {
+      const newFamily = normalizeFamily({
+        ...state.family,
+        equippedItems: { ...state.family.equippedItems, [item.type]: item.id },
+      });
       commit(set, get, (current) => ({
         ...current,
-        family: normalizeFamily({
-          ...current.family,
-          equippedItems: { ...current.family.equippedItems, [item.type]: item.id },
-        }),
+        family: newFamily,
       }));
-      return { ok: true, alreadyOwned: true };
+    if (isSupabaseConfigured && state.family?.id) {
+      const prevFamily = { ...state.family };
+      runRemote(
+        supabase.from('families').update(familyPatchToDb({
+          equipped_items: newFamily.equippedItems,
+        })).eq('id', state.family.id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set({ family: normalizeFamily(prevFamily) });
+          saveState(get());
+          get().addToast('Ошибка покупки предмета', 'error');
+          throw err;
+        }),
+        get,
+        'buyItem',
+      );
     }
+    return { ok: true, alreadyOwned: true };
+  }
+
     if (state.family.coins < item.price) return { ok: false, alreadyOwned: false };
+    const newFamily = normalizeFamily({
+      ...state.family,
+      coins: state.family.coins - item.price,
+      ownedItems: [...(state.family.ownedItems || []), item.id],
+      equippedItems: { ...state.family.equippedItems, [item.type]: item.id },
+    });
     commit(set, get, (current) => ({
       ...current,
-      family: normalizeFamily({
-        ...current.family,
-        coins: current.family.coins - item.price,
-        ownedItems: [...(current.family.ownedItems || []), item.id],
-        equippedItems: { ...current.family.equippedItems, [item.type]: item.id },
-      }),
+      family: newFamily,
     }));
+    if (isSupabaseConfigured && state.family?.id) {
+      const prevFamily = { ...state.family };
+      runRemote(
+        supabase.from('families').update(familyPatchToDb({
+          coins: newFamily.coins,
+          ownedItems: newFamily.ownedItems,
+          equippedItems: newFamily.equippedItems,
+        })).eq('id', state.family.id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set({ family: normalizeFamily(prevFamily) });
+          saveState(get());
+          get().addToast('Ошибка покупки предмета', 'error');
+          throw err;
+        }),
+        get,
+        'buyItem',
+      );
+    }
     return { ok: true, alreadyOwned: false };
   },
 
@@ -1128,7 +1140,15 @@ export const useStore = create((set, get) => ({
       }));
       if (isSupabaseConfigured && state.family?.id) {
         runRemote(
-          supabase.from('families').update({ active_effect: effect.id }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+          supabase.from('families').update({ active_effect: effect.id }).eq('id', state.family.id).then(({ error }) => {
+            if (error) throw error;
+            return null;
+          }).catch(err => {
+            set((state) => ({ ...state, family: normalizeFamily({ ...state.family, activeEffect: get().family.activeEffect }) }));
+            saveState(get());
+            get().addToast('Ошибка смены эффекта', 'error');
+            throw err;
+          }),
           get,
           'buyEffect',
         );
@@ -1147,12 +1167,21 @@ export const useStore = create((set, get) => ({
       return { ...current, family: newFamily };
     });
     if (isSupabaseConfigured && state.family?.id) {
+      const prevFamily = { ...state.family };
       runRemote(
         supabase.from('families').update({
           owned_effects: newFamily.ownedEffects,
           active_effect: newFamily.activeEffect,
           coins: newFamily.coins,
-        }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        }).eq('id', state.family.id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set({ family: normalizeFamily(prevFamily) });
+          saveState(get());
+          get().addToast('Ошибка покупки эффекта', 'error');
+          throw err;
+        }),
         get,
         'buyEffect',
       );
@@ -1191,7 +1220,15 @@ export const useStore = create((set, get) => ({
       }));
       if (isSupabaseConfigured && state.family?.id) {
         runRemote(
-          supabase.from('families').update({ active_bg: bg.id }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+          supabase.from('families').update({ active_bg: bg.id }).eq('id', state.family.id).then(({ error }) => {
+            if (error) throw error;
+            return null;
+          }).catch(err => {
+            set((state) => ({ ...state, family: normalizeFamily({ ...state.family, activeBackground: get().family.activeBackground }) }));
+            saveState(get());
+            get().addToast('Ошибка смены фона', 'error');
+            throw err;
+          }),
           get,
           'buyBackground',
         );
@@ -1210,12 +1247,21 @@ export const useStore = create((set, get) => ({
       return { ...current, family: newFamily };
     });
     if (isSupabaseConfigured && state.family?.id) {
+      const prevFamily = { ...state.family };
       runRemote(
         supabase.from('families').update({
           owned_backgrounds: newFamily.ownedBackgrounds,
           active_bg: newFamily.activeBackground,
           coins: newFamily.coins,
-        }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        }).eq('id', state.family.id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set({ family: normalizeFamily(prevFamily) });
+          saveState(get());
+          get().addToast('Ошибка покупки фона', 'error');
+          throw err;
+        }),
         get,
         'buyBackground',
       );
@@ -1275,19 +1321,28 @@ export const useStore = create((set, get) => ({
     }));
 
     if (isSupabaseConfigured && state.family?.id) {
+      const prevFamily = { ...state.family };
       runRemote(
         supabase.from('families').update({
           active_boosts: newActiveBoosts,
           boost_expires_at: newBoostExpiresAt,
           coins: state.family.coins - boost.price,
-        }).eq('id', state.family.id).then(({ error }) => (error ? Promise.reject(error) : null)),
+        }).eq('id', state.family.id).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set({ family: normalizeFamily(prevFamily) });
+          saveState(get());
+          get().addToast('Ошибка покупки буста', 'error');
+          throw err;
+        }),
         get,
         'buyBoost',
       );
     }
-
     return { ok: true, alreadyActive };
   },
+
 
   isBoostActive: (boostId) => {
     const state = get();
@@ -1301,8 +1356,10 @@ export const useStore = create((set, get) => ({
     const state = get();
     const now = Date.now();
     const activeBoosts = [];
+    const expiresAtMap = state.family?.boostExpiresAt;
+    if (!expiresAtMap) return activeBoosts;
     for (const boostId of state.family.activeBoosts || []) {
-      const expiresAt = state.family.boostExpiresAt?.[boostId];
+      const expiresAt = expiresAtMap[boostId];
       if (expiresAt && expiresAt > now) {
         activeBoosts.push(boostId);
       }
@@ -1338,30 +1395,53 @@ export const useStore = create((set, get) => ({
       const currentState = get();
       const buyerName = currentState.getCurrentMember()?.name || 'Кто-то';
       if (currentState.family?.id) {
-        fetch('/api/notify-reward', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'notify',
-            familyId: currentState.family.id,
-            rewardName: reward.name,
-            buyerName,
-            excludeMemberId: currentState.getCurrentMember()?.id,
-          }),
-        }).catch(() => {});
+        const headers = { 'Content-Type': 'application/json' };
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+          }
+           fetch('/api/notify-reward', {
+             method: 'POST',
+             headers,
+             body: JSON.stringify({
+               action: 'notify',
+               familyId: currentState.family.id,
+               rewardId: rewardId,
+               buyerId: member.id,
+               excludeMemberId: currentState.getMemberId?.(),
+             }),
+           }).catch(() => {});
+
+        });
       }
     };
 
     if (reward.price < 0) {
       const earned = Math.abs(reward.price);
       const coins = (state.family?.coins ?? 0) + earned;
+      const prevFamily = { ...state.family };
       commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
       const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
       commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
       if (isSupabaseConfigured && state.family?.id) {
-        supabase.from('purchased_rewards').insert({
-          id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
-        }).then(({ error }) => { if (error) console.error('buyReward sync:', error); });
+        runRemote(
+          Promise.all([
+            supabase.from('purchased_rewards').insert({
+              id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
+            }),
+            supabase.from('families').update({ coins }).eq('id', state.family.id)
+          ]).then(({ error }) => {
+            if (error) throw error;
+            return null;
+          }).catch(err => {
+            set((state) => ({ ...state, family: normalizeFamily(prevFamily), purchasedRewards: state.purchasedRewards.filter(r => r.id !== entry.id) }));
+            saveState(get());
+            get().addToast('Ошибка начисления награды', 'error');
+            throw err;
+          }),
+          get,
+          'buyReward'
+        );
       }
       notifyOthers();
       return { ok: true, earned };
@@ -1371,9 +1451,21 @@ export const useStore = create((set, get) => ({
       const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
       commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
       if (isSupabaseConfigured && state.family?.id) {
-        supabase.from('purchased_rewards').insert({
-          id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
-        }).then(({ error }) => { if (error) console.error('buyReward sync:', error); });
+        runRemote(
+          supabase.from('purchased_rewards').insert({
+            id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
+          }).then(({ error }) => {
+            if (error) throw error;
+            return null;
+          }).catch(err => {
+            set((state) => ({ ...state, purchasedRewards: state.purchasedRewards.filter(r => r.id !== entry.id) }));
+            saveState(get());
+            get().addToast('Ошибка получения бесплатной награды', 'error');
+            throw err;
+          }),
+          get,
+          'buyReward'
+        );
       }
       notifyOthers();
       return { ok: true, free: true };
@@ -1382,19 +1474,35 @@ export const useStore = create((set, get) => ({
     if ((state.family?.coins ?? 0) < reward.price) return { ok: false, reason: 'insufficient_coins' };
 
     const coins = state.family.coins - reward.price;
+    const prevFamily = { ...state.family };
     commit(set, get, (current) => ({ ...current, family: normalizeFamily({ ...current.family, coins }) }));
 
     const entry = { id: uuidv4(), family_id: state.family?.id, reward_id: rewardId, purchased_by: member.id, purchased_at: new Date().toISOString(), status: 'purchased' };
     commit(set, get, (current) => ({ ...current, purchasedRewards: [entry, ...current.purchasedRewards] }));
 
     if (isSupabaseConfigured && state.family?.id) {
-      supabase.from('purchased_rewards').insert({
-        id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
-      }).then(({ error }) => { if (error) console.error('buyReward sync:', error); });
-
-      supabase.from('families').update({ coins }).eq('id', state.family.id).then(({ error }) => {
-        if (error) console.error('buyReward coins sync:', error);
-      });
+      runRemote(
+        Promise.all([
+          supabase.from('purchased_rewards').insert({
+            id: entry.id, family_id: state.family.id, reward_id: rewardId, purchased_by: member.id, status: 'purchased',
+          }),
+          supabase.from('families').update({ coins }).eq('id', state.family.id)
+        ]).then(({ error }) => {
+          if (error) throw error;
+          return null;
+        }).catch(err => {
+          set((state) => ({ 
+            ...state, 
+            family: normalizeFamily(prevFamily), 
+            purchasedRewards: state.purchasedRewards.filter(r => r.id !== entry.id) 
+          }));
+          saveState(get());
+          get().addToast('Ошибка покупки награды', 'error');
+          throw err;
+        }),
+        get,
+        'buyReward'
+      );
     }
     notifyOthers();
     return { ok: true, spent: reward.price };
@@ -1621,39 +1729,16 @@ export const useStore = create((set, get) => ({
 
     if (isSupabaseConfigured && fromMemberId && toMemberId) {
       try {
-        const { data: fromData } = await supabase
-          .from('member_collections')
-          .select('count, stars')
-          .eq('member_id', fromMemberId)
-          .eq('card_id', cardId)
-          .maybeSingle();
-
-        if (fromData && fromData.count > count) {
-          await supabase
-            .from('member_collections')
-            .upsert({ member_id: fromMemberId, card_id: cardId, count: fromData.count - count, stars: fromData.stars }, { onConflict: 'member_id,card_id' });
-        } else if (fromData && fromData.count === count) {
-          await supabase.from('member_collections').delete().eq('member_id', fromMemberId).eq('card_id', cardId);
-        }
-
-        const { data: toData } = await supabase
-          .from('member_collections')
-          .select('count, stars')
-          .eq('member_id', toMemberId)
-          .eq('card_id', cardId)
-          .maybeSingle();
-
-        if (toData) {
-          await supabase
-            .from('member_collections')
-            .upsert({ member_id: toMemberId, card_id: cardId, count: toData.count + count, stars: toData.stars }, { onConflict: 'member_id,card_id' });
-        } else {
-          await supabase
-            .from('member_collections')
-            .insert({ member_id: toMemberId, card_id: cardId, count, stars: fromItem.stars });
-        }
+        const { error: rpcError } = await supabase.rpc('transfer_card', {
+          p_from_member_id: fromMemberId,
+          p_to_member_id: toMemberId,
+          p_card_id: cardId,
+          p_count: count,
+        });
+        if (rpcError) throw rpcError;
       } catch (error) {
         console.error('transferCard sync error:', error);
+        get().addToast?.('Ошибка синхронизации передачи карты', 'error');
       }
     }
 
@@ -1749,24 +1834,26 @@ export const useStore = create((set, get) => ({
       const initiatorColl = state.memberCollections[exchange.initiatorId] || [];
       const recipientColl = state.memberCollections[currentMemberId] || [];
 
-      const newInitiatorColl = [
-        ...initiatorColl.filter((c) => c.cardId !== exchange.offeredCardId),
-        { cardId: exchange.requestedCardId, card_id: exchange.requestedCardId, count: 1, stars: requestedItem.stars, isNew: true, addedAt: Date.now() }
-      ];
+      // Initiator already gave away offeredCardId in proposeExchange.
+      // Only add the requested card to initiator.
+      const newInitiatorColl = [...initiatorColl];
+      newInitiatorColl.push({ cardId: exchange.requestedCardId, card_id: exchange.requestedCardId, count: 1, stars: requestedItem.stars, isNew: true, addedAt: Date.now() });
 
-      const newRecipientColl = recipientColl.map((c) => {
-        if (c.cardId === exchange.requestedCardId && c.count > 1) {
-          return { ...c, count: c.count - 1 };
+      const newRecipientColl = recipientColl.reduce((acc, c) => {
+        if (c.cardId === exchange.requestedCardId) {
+          if (c.count > 1) acc.push({ ...c, count: c.count - 1 });
+        } else if (c.cardId === exchange.offeredCardId) {
+          acc.push({ ...c, count: c.count + 1, isNew: true });
+        } else {
+          acc.push(c);
         }
-        if (c.cardId === exchange.requestedCardId && c.count === 1) {
-          return null;
-        }
-        if (c.cardId === exchange.offeredCardId) {
-          const existing = initiatorColl.find((c2) => c2.cardId === exchange.offeredCardId);
-          return { ...c, count: c.count + (existing?.count || 1), isNew: true };
-        }
-        return c;
-      }).filter(Boolean);
+        return acc;
+      }, []);
+      const hasOffered = recipientColl.some(c => c.cardId === exchange.offeredCardId);
+      if (!hasOffered) {
+        const initItem = initiatorColl.find(c => c.cardId === exchange.offeredCardId);
+        newRecipientColl.push({ cardId: exchange.offeredCardId, card_id: exchange.offeredCardId, count: 1, stars: initItem?.stars || 0, isNew: true, addedAt: Date.now() });
+      }
 
       return {
         ...state,
@@ -1783,59 +1870,14 @@ export const useStore = create((set, get) => ({
 
     if (isSupabaseConfigured && family?.id) {
       try {
-        await supabase.from('card_exchanges').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', exchangeId);
-
-        const { data: requestedData } = await supabase
-          .from('member_collections')
-          .select('count, stars')
-          .eq('member_id', currentMemberId)
-          .eq('card_id', exchange.requestedCardId)
-          .maybeSingle();
-
-        if (requestedData && requestedData.count > 1) {
-          await supabase
-            .from('member_collections')
-            .upsert({ member_id: currentMemberId, card_id: exchange.requestedCardId, count: requestedData.count - 1, stars: requestedData.stars }, { onConflict: 'member_id,card_id' });
-        } else if (requestedData && requestedData.count === 1) {
-          await supabase.from('member_collections').delete().eq('member_id', currentMemberId).eq('card_id', exchange.requestedCardId);
-        }
-
-        const { data: offeredData } = await supabase
-          .from('member_collections')
-          .select('count')
-          .eq('member_id', exchange.initiatorId)
-          .eq('card_id', exchange.offeredCardId)
-          .maybeSingle();
-
-        if (offeredData) {
-          await supabase
-            .from('member_collections')
-            .upsert({ member_id: exchange.initiatorId, card_id: exchange.requestedCardId, count: 1, stars: requestedData?.stars || 0 }, { onConflict: 'member_id,card_id' });
-        } else {
-          await supabase
-            .from('member_collections')
-            .insert({ member_id: exchange.initiatorId, card_id: exchange.requestedCardId, count: 1, stars: requestedData?.stars || 0 });
-        }
-
-        const { data: offeredForRecipientData } = await supabase
-          .from('member_collections')
-          .select('count, stars')
-          .eq('member_id', currentMemberId)
-          .eq('card_id', exchange.offeredCardId)
-          .maybeSingle();
-
-        if (offeredForRecipientData) {
-          await supabase
-            .from('member_collections')
-            .upsert({ member_id: currentMemberId, card_id: exchange.offeredCardId, count: offeredForRecipientData.count + 1, stars: offeredForRecipientData.stars }, { onConflict: 'member_id,card_id' });
-        } else {
-          const initItem = memberCollections[exchange.initiatorId]?.find(c => c.cardId === exchange.offeredCardId);
-          await supabase
-            .from('member_collections')
-            .insert({ member_id: currentMemberId, card_id: exchange.offeredCardId, count: 1, stars: initItem?.stars || 0 });
-        }
+        const { error: rpcError } = await supabase.rpc('accept_exchange', {
+          p_exchange_id: exchangeId,
+          p_recipient_id: currentMemberId,
+        });
+        if (rpcError) throw rpcError;
       } catch (error) {
         console.error('acceptExchange sync error:', error);
+        get().addToast?.('Ошибка синхронизации обмена', 'error');
       }
     }
 
@@ -1913,19 +1955,21 @@ export const useStore = create((set, get) => ({
           .from('battle_deck')
           .delete()
           .eq('family_id', family.id)
+          .eq('member_id', currentMemberId)
           .in('slot', [1, 2, 3, 4])
-          .then(() => {
+          .then(({ error: deleteError }) => {
+            if (deleteError) return Promise.reject(deleteError);
             const rows = cardIds.slice(0, 4).map((cardId, idx) => ({
+              member_id: currentMemberId,
               family_id: family.id,
               card_id: cardId,
               slot: idx + 1,
             })).filter((r) => r.card_id);
             if (rows.length > 0) {
-              return supabase.from('battle_deck').insert(rows);
+              return supabase.from('battle_deck').insert(rows).then(({ error }) => error ? Promise.reject(error) : null);
             }
             return null;
-          })
-          .then(({ error }) => (error ? Promise.reject(error) : null)),
+          }),
         get,
         'setBossDeck',
       );
@@ -1971,6 +2015,7 @@ export const useStore = create((set, get) => ({
     get().addToast(`🐲 Семья бездействовала 4+ часов! ${boss.name} восстановил +${healAmount} HP!`, 'boss_attack');
 
     if (isSupabaseConfigured && family?.id) {
+      const now = new Date().toISOString();
       supabase
         .from('boss_weeks')
         .select('id')
@@ -1979,7 +2024,7 @@ export const useStore = create((set, get) => ({
         .maybeSingle()
         .then(({ data: bw }) => {
           if (!bw) return;
-          supabase.from('boss_weeks').update({ boss_hp_cur: newHp }).eq('id', bw.id).then(({ error }) => {
+          supabase.from('boss_weeks').update({ boss_hp_cur: newHp, last_attack_at: now }).eq('id', bw.id).then(({ error }) => {
             if (error) console.error('triggerBossAttack sync:', error);
           });
         });
@@ -2015,7 +2060,7 @@ export const useStore = create((set, get) => ({
       });
       supabase
         .from('boss_weeks')
-        .update({ is_won: true })
+        .update({ is_won: true, boss_hp_cur: 0 })
         .eq('family_id', family.id)
         .eq('week_start', getWeekStartKey());
     }

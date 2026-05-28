@@ -1,3 +1,5 @@
+import { isSupabaseConfigured, supabase } from '@/shared/lib/supabase';
+
 let deferredPrompt = null;
 let pushSubscriptionInProgress = false;
 
@@ -101,9 +103,17 @@ export async function subscribeToPush(memberId, familyId) {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
 
+    const headers = { 'Content-Type': 'application/json' };
+    if (isSupabaseConfigured && supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+    }
+
     await fetch('/api/notify-reward', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         action: 'subscribe',
         memberId,
@@ -128,9 +138,17 @@ export async function unsubscribeFromPush(memberId) {
     if (subscription) {
       await subscription.unsubscribe();
     }
+    const headers = { 'Content-Type': 'application/json' };
+    if (isSupabaseConfigured && supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+    }
+
     await fetch('/api/notify-reward', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ action: 'unsubscribe', memberId }),
     });
   } catch (err) {

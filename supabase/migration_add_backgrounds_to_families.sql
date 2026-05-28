@@ -1,3 +1,0 @@
-ALTER TABLE families
-  ADD COLUMN IF NOT EXISTS owned_backgrounds TEXT[] DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS active_bg TEXT DEFAULT NULL;

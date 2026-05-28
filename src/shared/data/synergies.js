@@ -1,14 +1,5 @@
 export const SYNERGIES = [
   {
-    id: 'morning_hero',
-    name: 'Утренний герой',
-    description: 'Задачи до 9:00 дают ×2 XP',
-    requiredCategories: ['health'],
-    minCards: 2,
-    bonusType: 'xp',
-    bonusValue: 2,
-  },
-  {
     id: 'active_family',
     name: 'Активная семья',
     description: 'Активность даёт +50% урона',

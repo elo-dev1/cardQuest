@@ -2,7 +2,7 @@ import { todayKey } from '@/shared/lib/date';
 import { getActiveSynergies } from '@/shared/data/synergies';
 import { getStreakCalc } from '@/entities/family/model/familyLogic';
 import { CARD_LIBRARY } from '@/shared/data/cardData';
-import { getRandomBossConfig, getBossConfigByName } from './bossConfig';
+import { getRandomBossConfig, getBossConfigByName } from '@/entities/boss/model/bossConfig';
 
 export const DIFFICULTY_DAMAGE = {
   easy: 10,
