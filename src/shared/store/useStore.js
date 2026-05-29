@@ -807,12 +807,12 @@ export const useStore = create((set, get) => ({
         body: JSON.stringify({ taskId, memberId, familyId: family.id }),
       });
 
+      const body = await response.text();
       let result;
       try {
-        result = await response.json();
+        result = JSON.parse(body);
       } catch {
-        const text = await response.text();
-        throw new Error(`Server error: ${text.slice(0, 200)}`);
+        throw new Error(`Server error: ${body.slice(0, 200)}`);
       }
       if (!response.ok) {
         if (result.alreadyDone) {
