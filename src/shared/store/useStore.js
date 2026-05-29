@@ -105,12 +105,26 @@ const normalizeState = (state) => {
 
 
 
+const PRUNE_DAYS = 30;
+const isOld = (dateStr) => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  return Date.now() - d.getTime() > PRUNE_DAYS * 86400000;
+};
+
 const loadState = () => {
   if (!canUseStorage()) return baseState;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return baseState;
-    return normalizeState(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    if (parsed.defeatedBosses) {
+      parsed.defeatedBosses = parsed.defeatedBosses.filter((b) => !isOld(b.defeatedAt ?? b.week_start));
+    }
+    if (parsed.purchasedRewards) {
+      parsed.purchasedRewards = parsed.purchasedRewards.filter((r) => !isOld(r.purchasedAt));
+    }
+    return normalizeState(parsed);
   } catch (e) {
     console.warn('[useStore] Не удалось прочитать сохранённое состояние из localStorage. Возможно, данные повреждены.', e);
     return baseState;
@@ -120,7 +134,22 @@ const loadState = () => {
 const saveState = (state) => {
   if (!canUseStorage()) return;
   const { toasts, isLoading, ...persisted } = state;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
+  if (isSupabaseConfigured) {
+    delete persisted.completions;
+    delete persisted.rewardsAwarded;
+  }
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
+  } catch (e) {
+    console.warn('[useStore] Failed to save state to localStorage. Storage may be full.', e);
+    try {
+      const old = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '{}');
+      const { defeatedBosses, purchasedRewards, ...compact } = old;
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...compact, ...persisted }));
+    } catch (e2) {
+      console.warn('[useStore] Storage still full after compaction.', e2);
+    }
+  }
 };
 
 const makeTasks = (familyId = null, createdBy = null) =>
@@ -778,7 +807,13 @@ export const useStore = create((set, get) => ({
         body: JSON.stringify({ taskId, memberId, familyId: family.id }),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        const text = await response.text();
+        throw new Error(`Server error: ${text.slice(0, 200)}`);
+      }
       if (!response.ok) {
         if (result.alreadyDone) {
           return { wasNewReward: false, reward: getRewardForTask(state.tasks.find(t => t.id === taskId), state.members.find(m => m.id === memberId), get) };

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { getRewardForTask } from '../src/shared/logic/rewardLogic';
-import { calculateBossDamage } from '../src/shared/logic/bossLogic';
+import { getRewardForTask } from './_shared/rewardLogic.js';
+import { calculateBossDamage } from './_shared/bossLogic.js';
 
 function getWeekStartKey() {
   const d = new Date();

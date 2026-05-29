@@ -5,6 +5,8 @@ const LOCAL_AUTH_KEY = 'card-quest-local-auth-user';
 const LOCAL_USERS_KEY = 'card-quest-local-auth-users';
 export const LOCAL_AUTH_EVENT = 'card-quest-local-auth-change';
 
+const getAppUrl = () => import.meta.env.VITE_APP_URL || window.location.origin;
+
 const readJson = (key, fallback) => {
   if (typeof window === 'undefined') return fallback;
   try {
@@ -65,7 +67,7 @@ export const authActions = {
       password,
       options: {
         data: { display_name: displayName },
-        emailRedirectTo: `${window.location.origin}/auth`,
+        emailRedirectTo: `${getAppUrl()}/auth`,
       },
     });
     if (error) throw error;
@@ -111,7 +113,7 @@ export const authActions = {
     if (!isSupabaseConfigured) return;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${getAppUrl()}/reset-password`,
     });
     if (error) throw error;
   },
@@ -132,7 +134,7 @@ export const authActions = {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/home` },
+      options: { redirectTo: `${getAppUrl()}/home` },
     });
     if (error) throw error;
   },

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
-import { REAL_REWARDS } from '../src/shared/data/realRewards';
+import { REAL_REWARDS } from './_shared/realRewards.js';
 
 webpush.setVapidDetails(
   'mailto:family@cardquest.app',
