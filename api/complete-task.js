@@ -120,7 +120,7 @@ export default async function handler(req, res) {
       }
     } catch (err) {
       console.error('failed to update stats:', err);
-      throw new Error('Failed to update rewards and stats');
+      throw err;
     }
 
     if (bossWeek) {
@@ -157,6 +157,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('complete-task error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
