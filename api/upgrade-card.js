@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { handleCors } from './_shared/cors.js';
 import { UPGRADE_COSTS } from './_shared/cardData.js';
 
 function createSupabaseClient(token) {
@@ -20,6 +21,7 @@ async function getUserFromRequest(req) {
 }
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const auth = await getUserFromRequest(req);

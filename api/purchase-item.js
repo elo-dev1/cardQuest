@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { PACK_TYPES, EFFECT_TYPES, BACKGROUND_TYPES, BOOST_TYPES } from '@/shared/data/shopItems';
+import { handleCors } from './_shared/cors.js';
+import { PACK_TYPES, EFFECT_TYPES, BACKGROUND_TYPES, BOOST_TYPES } from './_shared/shopItems.js';
 
 const createSupabaseClient = () => createClient(
   process.env.VITE_SUPABASE_URL, 
@@ -14,6 +15,7 @@ const ALL_SHOP_ITEMS = {
 };
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const client = createSupabaseClient();

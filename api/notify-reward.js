@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { handleCors } from './_shared/cors.js';
 import { REAL_REWARDS } from './_shared/realRewards.js';
 
 webpush.setVapidDetails(
@@ -28,6 +29,7 @@ async function getUserFromRequest(req) {
 }
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
